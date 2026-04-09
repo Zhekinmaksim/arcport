@@ -45,7 +45,7 @@ Anyone can register their own API and start earning USDC per call.
 
 ArcPort ships a built-in Webhook API — subscribe to any Arc address and receive HTTP POST notifications when USDC moves.
 
-- Worker runs every minute via Vercel Cron
+- Worker runs every 5 minutes via GitHub Actions cron
 - Queries Arc chain for Transfer events using ethers.js
 - Delivers signed payloads (`X-ArcPort-Signature: sha256=...`)
 - Up to 10 active subscriptions per agent key
@@ -137,7 +137,7 @@ Content-Type: application/json
 | Payments | ethers.js — direct USDC transfer via ERC-20 |
 | Backend | Vercel Functions — Node.js, ES modules |
 | Database | Supabase — Postgres, RLS enabled |
-| Cron | Vercel Cron — webhook worker every 60s |
+| Cron | GitHub Actions — webhook worker every 5 minutes |
 
 ---
 
@@ -175,6 +175,10 @@ Fork this repo, import into Vercel, add environment variables:
 | `ARC_PRIVATE_KEY` | Platform wallet private key |
 | `PLATFORM_ARC_ADDRESS` | Platform wallet address |
 | `CRON_SECRET` | Any random string — protects the webhook worker |
+
+**4. Configure GitHub Actions cron**
+
+Add the same `CRON_SECRET` value to your GitHub repository under `Settings → Secrets and variables → Actions`, then enable the `Webhook Worker` workflow. GitHub Actions calls the deployed `/api/webhook-worker` endpoint every 5 minutes.
 
 ---
 

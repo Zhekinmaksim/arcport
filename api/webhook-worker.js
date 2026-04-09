@@ -1,6 +1,6 @@
 // api/webhook-worker.js
-// Runs every minute via Vercel Cron
-// Polls ARC Testnet for USDC Transfer events, fires webhooks
+// Triggered by cron every 5 minutes via GitHub Actions
+// Polls ARC Testnet for USDC Transfer events and fires webhooks
 
 import { ethers } from 'ethers';
 import { createHmac } from 'crypto';
@@ -34,7 +34,7 @@ async function deliver(sub, payload) {
 }
 
 export default async function handler(req, res) {
-  // Security check
+  // Allow either Vercel Cron or a GitHub Actions bearer token.
   if (req.headers['x-vercel-cron'] !== '1' && req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }

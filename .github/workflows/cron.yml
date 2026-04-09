@@ -8,9 +8,13 @@ on:
 jobs:
   trigger:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Trigger webhook worker
+        env:
+          WORKER_URL: https://arcport.xyz/api/webhook-worker
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          curl -s -o /dev/null -w "%{http_code}" \
-            -X GET https://arcport.xyz/api/webhook-worker \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+          curl --fail-with-body --silent --show-error \
+            -X GET "$WORKER_URL" \
+            -H "Authorization: Bearer $CRON_SECRET"
