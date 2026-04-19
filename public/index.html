@@ -779,6 +779,7 @@ pre.code {
                 <div class="pay-box-label">PAYMENT &middot; ARC TESTNET</div>
                 <div class="pay-line"><span>Cost per call</span><span>$0.001 USDC</span></div>
                 <div class="pay-line"><span>Settlement</span><span class="c-grn">&lt;1 second</span></div>
+                <div class="pay-line"><span>Payment method</span><span id="play-pay-method" class="c-blue">Direct Arc</span></div>
                 <div class="pay-line"><span>Your balance</span><span id="play-balance" class="c-blue">0.000 USDC</span></div>
               </div>
               <button id="play-btn" class="btn btn-primary btn-block btn-lg" onclick="runCall()">
@@ -996,6 +997,8 @@ const S = {
   page: 'marketplace', catFilter: 'All', calling: false, selectedId: null,
   key: localStorage.getItem('ap_k') || '',
   addr: localStorage.getItem('ap_a') || '',
+  walletType: localStorage.getItem('ap_wt') || 'eoa',
+  circleWalletId: localStorage.getItem('ap_cw') || '',
   balance: 0, txs: [], webhooks: [], myApis: [],
   apis: [
     { id:'weather-1',   name:'Weather Pro',   cat:'Data',    calls:0, rev:0, ep:'open-meteo.com',                desc:'Weather data for any city. Returns temperature, humidity, and wind speed in under 200ms.',    ex:'{"city":"Berlin"}',                               hint:'Try: Berlin, Tokyo, New York' },
@@ -1043,6 +1046,16 @@ function syncBalance() {
   if (pb) { pb.textContent = fmtU(S.balance) + ' USDC'; pb.style.color = S.balance < 0.002 ? 'var(--red)' : 'var(--blue2)'; }
   const wb = $('wallet-balance-num'); if (wb) wb.textContent = fmtU(S.balance);
   const wc = $('wallet-balance-calls'); if (wc) wc.textContent = '~ ' + Math.floor(S.balance / 0.001).toLocaleString() + ' API calls remaining';
+  const pm = $('play-pay-method');
+  if (pm) {
+    if (S.walletType === 'circle') {
+      pm.textContent = '⚡ Nanopayments (gas-free)';
+      pm.style.color = 'var(--grn)';
+    } else {
+      pm.textContent = 'Direct Arc';
+      pm.style.color = 'var(--blue2)';
+    }
+  }
 }
 
 // Log
@@ -1169,7 +1182,7 @@ async function runCall() {
     } else {
       const p = j.payment;
       addLog('pay', 'ARC tx: ' + p.tx_hash.slice(0,20) + '...');
-      addLog('pay', 'Confirmed in ' + p.finality_ms + 'ms');
+      addLog('pay', `Confirmed in ${p.finality_ms}ms${p.payment_type === 'nanopayment' ? ' · gas-free ⚡' : ''}`);
       addLog('call', api.name + ' responded (' + j.api.latency_ms + 'ms)');
       if (j.data) addLog('info', JSON.stringify(j.data).slice(0, 90));
 
@@ -1198,6 +1211,8 @@ async function runCall() {
 // ── WALLET ─────────────────────────────────
 function renderWallet() {
   const hasWallet = S.key && S.key.startsWith('apk_');
+  const isCircle  = S.walletType === 'circle';
+
   $('wallet-left').innerHTML = hasWallet ? `
     <div class="balance-hero">
       <div class="balance-hero-label">USDC BALANCE &bull; Arc Testnet</div>
@@ -1206,7 +1221,12 @@ function renderWallet() {
       <div class="balance-calls" id="wallet-balance-calls">~ ${Math.floor(S.balance/0.001).toLocaleString()} API calls remaining</div>
     </div>
     <div class="card">
-      <div class="card-head"><span class="card-title">Credentials</span></div>
+      <div class="card-head">
+        <span class="card-title">Credentials</span>
+        <span class="chip ${isCircle ? 'ch-grn' : 'ch-blue'}" style="font-size:9px">
+          ${isCircle ? '⚡ Circle Wallet' : 'EOA Wallet'}
+        </span>
+      </div>
       <div class="card-body">
         <div class="form-stack">
           <div class="field mono-field">
@@ -1217,12 +1237,27 @@ function renderWallet() {
             <div class="field-label">Arc address</div>
             <input readonly value="${S.addr}" onclick="this.select()" style="cursor:pointer">
           </div>
+          ${isCircle && S.circleWalletId ? `
+          <div class="field mono-field">
+            <div class="field-label">Circle Wallet ID</div>
+            <input readonly value="${S.circleWalletId}" onclick="this.select()" style="cursor:pointer;color:var(--grn)">
+          </div>` : ''}
         </div>
         <div class="row g8 mt12">
-          <a href="https://testnet.arcscan.app/address/${S.addr}" target="_blank" class="btn btn-secondary" style="flex:1;justify-content:center">View on explorer</a>
-          <button class="btn btn-secondary" style="flex:1" onclick="refreshBalance()">Refresh balance</button>
+          <a href="https://testnet.arcscan.app/address/${S.addr}" target="_blank" class="btn btn-secondary btn-sm" style="flex:1;justify-content:center">Explorer</a>
+          <button class="btn btn-secondary btn-sm" style="flex:1" onclick="refreshBalance()">Refresh</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetWallet()">Reset</button>
         </div>
         <div class="divider"></div>
+        ${isCircle ? `
+        <div style="background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.18);border-radius:var(--r);padding:12px 14px;margin-bottom:12px">
+          <div class="mono" style="font-size:9px;color:var(--grn);letter-spacing:0.1em;margin-bottom:6px">CIRCLE NANOPAYMENTS ENABLED</div>
+          <p class="c3 f12" style="line-height:1.6">Gas-free payments via Circle Gateway. Each API call signs an EIP-3009 authorization &mdash; zero gas, instant confirmation.</p>
+        </div>` : `
+        <div style="background:var(--blue-d);border:1px solid var(--blue-b);border-radius:var(--r);padding:12px 14px;margin-bottom:12px">
+          <div class="mono" style="font-size:9px;color:var(--blue2);letter-spacing:0.1em;margin-bottom:6px">LEGACY MODE</div>
+          <p class="c3 f12" style="line-height:1.6">Direct Arc onchain transfer. Upgrade to Circle Wallet below to enable gas-free Nanopayments.</p>
+        </div>`}
         <button class="btn btn-primary btn-block" onclick="window.open('https://faucet.circle.com','_blank')">
           Fund wallet on Arc Testnet &rarr;
         </button>
@@ -1230,26 +1265,43 @@ function renderWallet() {
       </div>
     </div>` : `
     <div class="card" style="border-color:var(--blue-b)">
-      <div class="card-body" style="text-align:center;padding:32px 24px">
-        <div style="width:46px;height:46px;background:var(--blue-d);border:1px solid var(--blue-b);border-radius:10px;display:grid;place-items:center;margin:0 auto 16px;font-size:20px;box-shadow:0 0 20px rgba(75,139,255,0.15)">&#9673;</div>
-        <div style="font-size:16px;font-weight:600;letter-spacing:-0.02em;margin-bottom:8px">Create your wallet</div>
-        <p class="c3 f13" style="line-height:1.6;margin-bottom:22px">
-          Creates a real wallet on Arc Testnet. You get an Arc address and an agent key to use in API calls.
-        </p>
-        <button id="wallet-create-btn" class="btn btn-primary btn-block btn-lg" onclick="createWallet()">
-          Create wallet
-        </button>
-        <p class="c3 f12 mono" style="margin-top:10px">Free &middot; Powered by Circle</p>
+      <div class="card-body" style="text-align:center;padding:28px 24px">
+        <div style="width:46px;height:46px;background:var(--blue-d);border:1px solid var(--blue-b);border-radius:10px;display:grid;place-items:center;margin:0 auto 14px;font-size:20px">&#9673;</div>
+        <div style="font-size:16px;font-weight:600;letter-spacing:-0.02em;margin-bottom:6px">Choose your wallet type</div>
+        <p class="c3 f13" style="line-height:1.6;margin-bottom:20px">Get an Arc address and agent key for pay-per-call API access.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <button id="wallet-create-btn" class="btn btn-secondary btn-block" onclick="createWallet('eoa')" style="flex-direction:column;gap:5px;padding:14px 10px;height:auto">
+            <span style="font-size:18px">&#9673;</span>
+            <span style="font-weight:600;font-size:12px">EOA Wallet</span>
+            <span class="c3" style="font-size:11px;font-weight:400">Direct Arc transfer</span>
+          </button>
+          <button id="wallet-create-circle-btn" class="btn btn-primary btn-block" onclick="createWallet('circle')" style="flex-direction:column;gap:5px;padding:14px 10px;height:auto">
+            <span style="font-size:18px">&#10024;</span>
+            <span style="font-weight:600;font-size:12px">Circle Wallet</span>
+            <span style="font-size:11px;font-weight:400;opacity:0.85">Gas-free Nanopayments</span>
+          </button>
+        </div>
+        <p class="c3 f12 mono">Free &middot; Powered by Circle &middot; Arc Testnet</p>
       </div>
     </div>
     <div class="card">
-      <div class="card-head"><span class="card-title">Getting started</span></div>
+      <div class="card-head"><span class="card-title">Wallet types</span></div>
       <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="padding:12px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r)">
+            <div class="mono c-blue" style="font-size:9px;letter-spacing:0.1em;margin-bottom:6px">EOA WALLET</div>
+            <div class="f12 c2" style="line-height:1.6">Standard Arc wallet. Pays gas per call. Simple setup, works immediately.</div>
+          </div>
+          <div style="padding:12px;background:var(--bg2);border:1px solid rgba(52,211,153,0.2);border-radius:var(--r)">
+            <div class="mono" style="font-size:9px;letter-spacing:0.1em;margin-bottom:6px;color:var(--grn)">CIRCLE WALLET</div>
+            <div class="f12 c2" style="line-height:1.6">Circle Dev-Controlled Wallet. Gas-free via Nanopayments. Requires Circle API setup.</div>
+          </div>
+        </div>
+        <div class="divider"></div>
         <div class="steps">
-          <div class="step"><div class="step-num">1</div><div class="step-text">Create your wallet here</div></div>
-          <div class="step"><div class="step-num">2</div><div class="step-text">Go to faucet.circle.com and select Arc Testnet</div></div>
-          <div class="step"><div class="step-num">3</div><div class="step-text">Paste your Arc address. Receive 10 USDC free.</div></div>
-          <div class="step"><div class="step-num">4</div><div class="step-text">Use your agent key in Playground to make real onchain API calls.</div></div>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Create wallet (EOA for quick start, Circle for Nanopayments)</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Go to faucet.circle.com &rarr; Arc Testnet &rarr; paste address &rarr; 10 USDC free</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Use your agent key in Playground to make paid API calls</div></div>
         </div>
       </div>
     </div>`;
@@ -1258,18 +1310,42 @@ function renderWallet() {
   syncBalance();
 }
 
-async function createWallet() {
-  const btn = $('wallet-create-btn'); if (btn) { btn.disabled = true; btn.textContent = 'Creating...'; }
+async function createWallet(type = 'eoa') {
+  const btnId = type === 'circle' ? 'wallet-create-circle-btn' : 'wallet-create-btn';
+  const btn   = $(btnId);
+  if (btn) { btn.disabled = true; btn.querySelector('span:nth-child(2)').textContent = 'Creating...'; }
   try {
-    const r = await fetch('/api/wallet', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({action:'create'}) });
-    const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Failed');
-    S.key = d.agent_key; S.addr = d.arc_address; S.balance = 0;
-    localStorage.setItem('ap_k', S.key); localStorage.setItem('ap_a', S.addr);
-    renderWallet(); syncBalance(); toast('Wallet created — get USDC at faucet.circle.com');
+    const action = type === 'circle' ? 'create_circle' : 'create';
+    const r = await fetch('/api/wallet', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({action}) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Failed');
+
+    S.key  = d.agent_key;
+    S.addr = d.arc_address;
+    S.walletType     = type;
+    S.circleWalletId = d.circle_wallet_id || '';
+    S.balance        = 0;
+    localStorage.setItem('ap_k',  S.key);
+    localStorage.setItem('ap_a',  S.addr);
+    localStorage.setItem('ap_wt', S.walletType);
+    localStorage.setItem('ap_cw', S.circleWalletId);
+
+    renderWallet(); syncBalance();
+    toast(type === 'circle'
+      ? 'Circle Wallet created — fund at faucet.circle.com'
+      : 'Wallet created — fund at faucet.circle.com');
   } catch(e) {
     toast('Error: ' + e.message, 'err');
-    if (btn) { btn.disabled = false; btn.textContent = 'Create wallet'; }
+    if (btn) { btn.disabled = false; }
+    renderWallet();
   }
+}
+
+function resetWallet() {
+  localStorage.removeItem('ap_k'); localStorage.removeItem('ap_a');
+  localStorage.removeItem('ap_wt'); localStorage.removeItem('ap_cw');
+  S.key = ''; S.addr = ''; S.walletType = 'eoa'; S.circleWalletId = ''; S.balance = 0;
+  renderWallet(); syncBalance(); toast('Wallet reset');
 }
 
 async function refreshBalance() {
@@ -1277,7 +1353,11 @@ async function refreshBalance() {
   try {
     const r = await fetch('/api/wallet', { headers: {'Authorization': 'Bearer ' + S.key} });
     const d = await r.json();
-    if (r.ok && d.balance_usdc !== undefined) { S.balance = d.balance_usdc; syncBalance(); toast('Balance: ' + fmtU(S.balance) + ' USDC'); }
+    if (r.ok && d.balance_usdc !== undefined) {
+      S.balance = d.balance_usdc;
+      syncBalance();
+      toast('Balance: ' + fmtU(S.balance) + ' USDC');
+    }
   } catch(e) { toast('Refresh failed', 'err'); }
 }
 
@@ -1452,6 +1532,8 @@ async function triggerWorker() {
 // ── INIT ─────────────────────────────────────
 renderMarket();
 renderWallet();
+S.walletType     = localStorage.getItem('ap_wt') || 'eoa';
+S.circleWalletId = localStorage.getItem('ap_cw') || '';
 const initSel = $('play-api');
 if (initSel) { initSel.innerHTML = S.apis.map(a => `<option value="${a.id}">${a.name}</option>`).join(''); onApiChange(); }
 if (S.key && $('play-key')) $('play-key').value = S.key;
