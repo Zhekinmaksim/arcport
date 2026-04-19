@@ -56,26 +56,30 @@ async function onchainBalance(address) {
 }
 
 // ── Encrypt Entity Secret → fresh ciphertext each call ───
+let _cachedPublicKey = null;
+
 async function encryptEntitySecret(entitySecretHex) {
-  // Fetch Circle's public key
-  let r;
-  try {
-    r = await fetch(`${CIRCLE_API_BASE}/config/entity/publicKey`, {
-      headers: circleH(),
-    });
-  } catch (e) {
-    throw new Error(`publicKey fetch network error: ${e.message}`);
+  // Fetch Circle's public key (cached per function instance)
+  if (!_cachedPublicKey) {
+    let r;
+    try {
+      r = await fetch(`${CIRCLE_API_BASE}/config/entity/publicKey`, {
+        headers: circleH(),
+      });
+    } catch (e) {
+      throw new Error(`publicKey fetch network error: ${e.message}`);
+    }
+    const data = await r.json();
+    _cachedPublicKey = data.data?.publicKey;
+    if (!_cachedPublicKey) throw new Error('No public key: ' + JSON.stringify(data));
   }
-  const data = await r.json();
-  const publicKey = data.data?.publicKey;
-  if (!publicKey) throw new Error('No public key: ' + JSON.stringify(data));
 
   // RSA-OAEP encrypt with SHA-256
   const secretBuffer = Buffer.from(entitySecretHex, 'hex');
   let encrypted;
   try {
     encrypted = publicEncrypt(
-      { key: publicKey, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' },
+      { key: _cachedPublicKey, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' },
       secretBuffer
     );
   } catch (e) {
@@ -116,15 +120,11 @@ async function createCircleWallet() {
     const wsData = await wsResp.json();
     walletSetId  = wsData.data?.walletSet?.id;
     if (!walletSetId) throw new Error('Failed to create wallet set: ' + JSON.stringify(wsData));
+    // get new ciphertext for next call
+    ciphertext = await encryptEntitySecret(entitySecret);
   }
 
-  // 2. Create wallet on ARC-TESTNET (fresh ciphertext again)
-  let ciphertext2;
-  try {
-    ciphertext2 = await encryptEntitySecret(entitySecret);
-  } catch(e) {
-    throw new Error('Encrypt step 2 failed: ' + e.message);
-  }
+  // 2. Create wallet on ARC-TESTNET
   console.log('[ArcPort] Creating wallet with walletSetId:', walletSetId);
   const wResp = await fetch(`${CIRCLE_API_BASE}/developer/wallets`, {
     method: 'POST',
@@ -135,7 +135,7 @@ async function createCircleWallet() {
       blockchains:            ['ARC-TESTNET'],
       count:                  1,
       walletSetId,
-      entitySecretCiphertext: ciphertext2,
+      entitySecretCiphertext: ciphertext,
     }),
   });
   const wData = await wResp.json();
