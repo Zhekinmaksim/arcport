@@ -165,11 +165,11 @@ async function settlePayment(xPayment, requirements) {
   }
 }
 
-// ── Legacy Arc direct transfer ────────────────────────────
+// ── Legacy Arc direct transfer (pure fetch, no ethers) ────
 async function legacyTransfer() {
   const { ethers } = await import('ethers');
   const ERC20_ABI  = ['function transfer(address to, uint256 amount) returns (bool)'];
-  const provider   = new ethers.JsonRpcProvider(ARC_RPC, { chainId: ARC_CHAIN_ID, name: 'arc-testnet' });
+  const provider   = new ethers.JsonRpcProvider(ARC_RPC, { chainId: ARC_CHAIN_ID, name: 'arc-testnet' }, { staticNetwork: true });
   const wallet     = new ethers.Wallet(process.env.ARC_PRIVATE_KEY, provider);
   const usdc       = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, wallet);
   const recipient  = process.env.PLATFORM_ARC_ADDRESS || wallet.address;
