@@ -295,8 +295,9 @@ export default async function handler(req, res) {
       try {
         const cWallet  = await createCircleWallet();
         const agentKey = genKey('apk');
+        console.log('[ArcPort] Circle wallet created:', cWallet.address, cWallet.walletId);
 
-        await fetch(`${process.env.SUPABASE_URL}/rest/v1/agent_wallets`, {
+        const insertResp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/agent_wallets`, {
           method: 'POST',
           headers: { ...sbH(), 'Prefer': 'return=minimal' },
           body: JSON.stringify({
@@ -307,6 +308,12 @@ export default async function handler(req, res) {
             wallet_type:       'circle',
           }),
         });
+        console.log('[ArcPort] Supabase insert status:', insertResp.status);
+        if (!insertResp.ok) {
+          const errText = await insertResp.text();
+          console.error('[ArcPort] Supabase insert error:', errText);
+          return res.status(500).json({ error: 'DB insert failed: ' + errText });
+        }
 
         return res.status(201).json({
           success:           true,
