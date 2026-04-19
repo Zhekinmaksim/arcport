@@ -1,15 +1,22 @@
-// api/wallet.js — ArcPort wallet management (simplified)
+// api/wallet.js — ArcPort wallet management
 // GET  /api/wallet (Authorization: Bearer apk_...)  — USDC balance
 // POST /api/wallet { action: "create" }              — create EOA wallet
+// POST /api/wallet { action: "create_circle" }       — create Circle Dev-Controlled wallet
 
 const ARC_RPC      = 'https://rpc.testnet.arc.network';
 const USDC_ADDRESS = '0x3600000000000000000000000000000000000000';
 const ARC_CHAIN_ID = 5042002;
+const CIRCLE_API   = 'https://api.circle.com/v1/w3s';
 
 const sbH = () => ({
   'Content-Type': 'application/json',
   'apikey':        process.env.SUPABASE_ANON_KEY,
   'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+});
+
+const circleH = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${process.env.CIRCLE_API_KEY}`,
 });
 
 const genKey = () => 'apk_' + Array.from({ length: 32 }, () =>
@@ -30,13 +37,60 @@ async function onchainBalance(address) {
   } catch { return null; }
 }
 
+async function encryptEntitySecret(entitySecretHex) {
+  // Fetch Circle public key
+  const r = await fetch(`${CIRCLE_API}/config/entity/publicKey`, { headers: circleH() });
+  const d = await r.json();
+  const publicKey = d.data?.publicKey;
+  if (!publicKey) throw new Error('No public key: ' + JSON.stringify(d));
+
+  // RSA-OAEP encrypt — dynamic import of crypto
+  const { publicEncrypt, constants } = await import('node:crypto');
+  const encrypted = publicEncrypt(
+    { key: publicKey, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' },
+    Buffer.from(entitySecretHex, 'hex')
+  );
+  return encrypted.toString('base64');
+}
+
+async function createCircleWallet() {
+  const apiKey       = process.env.CIRCLE_API_KEY;
+  const entitySecret = process.env.CIRCLE_ENTITY_SECRET;
+  const walletSetId  = process.env.CIRCLE_WALLET_SET_ID;
+  if (!apiKey || !entitySecret) throw new Error('CIRCLE_API_KEY and CIRCLE_ENTITY_SECRET required');
+
+  const { randomUUID } = await import('node:crypto');
+
+  // Encrypt entity secret fresh each time
+  const ciphertext = await encryptEntitySecret(entitySecret);
+
+  // Create wallet
+  const wResp = await fetch(`${CIRCLE_API}/developer/wallets`, {
+    method: 'POST',
+    headers: circleH(),
+    body: JSON.stringify({
+      idempotencyKey:         randomUUID(),
+      accountType:            'EOA',
+      blockchains:            ['ARC-TESTNET'],
+      count:                  1,
+      walletSetId,
+      entitySecretCiphertext: ciphertext,
+    }),
+  });
+  const wData = await wResp.json();
+  const wallet = wData.data?.wallets?.[0];
+  if (!wallet) throw new Error('Circle wallet creation failed: ' + JSON.stringify(wData));
+
+  return { walletId: wallet.id, address: wallet.address };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin',  '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // GET: balance
+  // ── GET: balance ────────────────────────────────────────
   if (req.method === 'GET') {
     const agentKey = (req.headers.authorization || '').replace('Bearer ', '').trim();
     if (!agentKey) return res.status(401).json({ error: 'Missing agent key' });
@@ -66,10 +120,11 @@ export default async function handler(req, res) {
     });
   }
 
-  // POST: create wallet
+  // ── POST: create wallet ─────────────────────────────────
   if (req.method === 'POST') {
     const { action } = req.body || {};
 
+    // EOA wallet
     if (!action || action === 'create') {
       const { ethers } = await import('ethers');
       const wallet   = ethers.Wallet.createRandom();
@@ -92,23 +147,54 @@ export default async function handler(req, res) {
         chain_id:    ARC_CHAIN_ID,
         explorer:    `https://testnet.arcscan.app/address/${wallet.address}`,
         next_steps: [
-          '1. Copy your arc_address',
-          '2. Go to https://faucet.circle.com — select ARC Testnet',
-          '3. Paste your arc_address — receive 10 USDC free',
-          '4. Use your agent_key as Bearer token in API calls',
+          '1. Go to https://faucet.circle.com — select ARC Testnet',
+          '2. Paste your arc_address — receive 10 USDC free',
+          '3. Use agent_key as Bearer token in API calls',
         ],
       });
     }
 
-    // Circle wallet — temporarily disabled
+    // Circle Dev-Controlled wallet
     if (action === 'create_circle') {
-      return res.status(503).json({
-        error: 'Circle Wallet creation temporarily unavailable',
-        fallback: 'Use EOA wallet: POST { action: "create" }',
-      });
+      try {
+        const cWallet  = await createCircleWallet();
+        const agentKey = genKey();
+
+        // Save to Supabase (non-blocking)
+        fetch(`${process.env.SUPABASE_URL}/rest/v1/agent_wallets`, {
+          method: 'POST',
+          headers: { ...sbH(), 'Prefer': 'return=minimal' },
+          body: JSON.stringify({
+            agent_key:        agentKey,
+            arc_address:      cWallet.address,
+            circle_wallet_id: cWallet.walletId,
+            balance:          0,
+            wallet_type:      'circle',
+          }),
+        }).catch(e => console.error('[ArcPort] Supabase save failed:', e.message));
+
+        return res.status(201).json({
+          success:          true,
+          agent_key:        agentKey,
+          arc_address:      cWallet.address,
+          circle_wallet_id: cWallet.walletId,
+          wallet_type:      'circle',
+          network:          'ARC Testnet',
+          chain_id:         ARC_CHAIN_ID,
+          explorer:         `https://testnet.arcscan.app/address/${cWallet.address}`,
+          payment_methods: { nanopayment: true, direct: true },
+          next_steps: [
+            '1. Go to https://faucet.circle.com — select ARC Testnet',
+            '2. Paste your arc_address — receive 10 USDC free',
+            '3. Use agent_key in Playground',
+          ],
+        });
+      } catch(e) {
+        return res.status(500).json({ error: 'Circle wallet creation failed: ' + e.message });
+      }
     }
 
-    return res.status(400).json({ error: 'Unknown action', available: ['create'] });
+    return res.status(400).json({ error: 'Unknown action', available: ['create', 'create_circle'] });
   }
 
   return res.status(405).json({ error: 'Method not allowed' });
