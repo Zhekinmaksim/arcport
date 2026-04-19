@@ -12,7 +12,8 @@
 // GET  /api/wallet?type=gateway (Authorization: Bearer apk_...) — Gateway balance
 
 import { ethers } from 'ethers';
-import { randomUUID, publicEncrypt, constants } from 'crypto';
+import crypto from 'crypto';
+const { randomUUID, publicEncrypt, constants } = crypto;
 
 const ARC_RPC         = 'https://rpc.testnet.arc.network';
 const ARC_CHAIN_ID    = 5042002;
