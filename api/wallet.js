@@ -299,19 +299,14 @@ export default async function handler(req, res) {
         console.log('[ArcPort] SUPABASE_URL:', process.env.SUPABASE_URL ? 'set' : 'MISSING');
         console.log('[ArcPort] SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'set' : 'MISSING');
 
-        try {
-          await sbPost('agent_wallets', {
-            agent_key:         agentKey,
-            arc_address:       cWallet.address,
-            circle_wallet_id:  cWallet.walletId,
-            balance:           0,
-            wallet_type:       'circle',
-          });
-          console.log('[ArcPort] Supabase insert done');
-        } catch(e) {
-          console.error('[ArcPort] Supabase sbPost threw:', e.message);
-          return res.status(500).json({ error: 'DB error: ' + e.message });
-        }
+        // Save to Supabase async — don't block response
+        sbPost('agent_wallets', {
+          agent_key:         agentKey,
+          arc_address:       cWallet.address,
+          circle_wallet_id:  cWallet.walletId,
+          balance:           0,
+          wallet_type:       'circle',
+        }).catch(e => console.error('[ArcPort] Supabase background save failed:', e.message));
 
         return res.status(201).json({
           success:           true,
