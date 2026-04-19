@@ -12,6 +12,7 @@
 // GET  /api/wallet?type=gateway (Authorization: Bearer apk_...) — Gateway balance
 
 import { ethers } from 'ethers';
+import { randomUUID } from 'crypto';
 
 const ARC_RPC         = 'https://rpc.testnet.arc.network';
 const ARC_CHAIN_ID    = 5042002;
@@ -68,7 +69,7 @@ async function createCircleWallet() {
       method: 'POST',
       headers: circleH(),
       body: JSON.stringify({
-        idempotencyKey: `arcport-wset-${Date.now()}`,
+        idempotencyKey: randomUUID(),
         name: 'ArcPort Agents',
         entitySecretCiphertext: entitySecret,
       }),
@@ -83,7 +84,7 @@ async function createCircleWallet() {
     method: 'POST',
     headers: circleH(),
     body: JSON.stringify({
-      idempotencyKey:          `arcport-wallet-${Date.now()}`,
+      idempotencyKey:          randomUUID(),
       accountType:             'EOA',
       blockchains:             ['ARC-TESTNET'],
       count:                   1,
