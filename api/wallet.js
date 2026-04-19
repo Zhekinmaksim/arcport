@@ -296,18 +296,26 @@ export default async function handler(req, res) {
         const cWallet  = await createCircleWallet();
         const agentKey = genKey('apk');
         console.log('[ArcPort] Circle wallet created:', cWallet.address, cWallet.walletId);
+        console.log('[ArcPort] SUPABASE_URL:', process.env.SUPABASE_URL ? 'set' : 'MISSING');
+        console.log('[ArcPort] SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'set' : 'MISSING');
 
-        const insertResp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/agent_wallets`, {
-          method: 'POST',
-          headers: { ...sbH(), 'Prefer': 'return=minimal' },
-          body: JSON.stringify({
-            agent_key:         agentKey,
-            arc_address:       cWallet.address,
-            circle_wallet_id:  cWallet.walletId,
-            balance:           0,
-            wallet_type:       'circle',
-          }),
-        });
+        let insertResp;
+        try {
+          insertResp = await fetch(`${process.env.SUPABASE_URL}/rest/v1/agent_wallets`, {
+            method: 'POST',
+            headers: { ...sbH(), 'Prefer': 'return=minimal' },
+            body: JSON.stringify({
+              agent_key:         agentKey,
+              arc_address:       cWallet.address,
+              circle_wallet_id:  cWallet.walletId,
+              balance:           0,
+              wallet_type:       'circle',
+            }),
+          });
+        } catch(e) {
+          console.error('[ArcPort] Supabase fetch threw:', e.message);
+          return res.status(500).json({ error: 'DB fetch error: ' + e.message });
+        }
         console.log('[ArcPort] Supabase insert status:', insertResp.status);
         if (!insertResp.ok) {
           const errText = await insertResp.text();
