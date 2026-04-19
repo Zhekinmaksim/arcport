@@ -43,13 +43,26 @@ const circleH = () => ({
   'Authorization': `Bearer ${process.env.CIRCLE_API_KEY}`,
 });
 
-// ── Onchain USDC balance ──────────────────────────────────
+// ── Onchain USDC balance (direct RPC, no ethers) ─────────
 async function onchainBalance(address) {
   try {
-    const provider = new ethers.JsonRpcProvider(ARC_RPC, { chainId: ARC_CHAIN_ID, name: 'arc-testnet' });
-    const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, provider);
-    const raw  = await usdc.balanceOf(address);
-    return parseFloat(ethers.formatUnits(raw, 6));
+    // eth_call to USDC balanceOf(address)
+    const data = '0x70a08231' + address.slice(2).toLowerCase().padStart(64, '0');
+    const r = await fetch(ARC_RPC, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0', method: 'eth_call',
+        params: [{ to: USDC_ADDRESS, data }, 'latest'],
+        id: 1,
+      }),
+    });
+    const d = await r.json();
+    if (d.result && d.result !== '0x') {
+      const raw = BigInt(d.result);
+      return Number(raw) / 1e6; // USDC has 6 decimals
+    }
+    return 0;
   } catch {
     return null;
   }
