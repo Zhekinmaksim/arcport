@@ -160,18 +160,31 @@ export default async function handler(req, res) {
         const cWallet  = await createCircleWallet();
         const agentKey = genKey();
 
-        // Save to Supabase (non-blocking)
-        fetch(`${process.env.SUPABASE_URL}/rest/v1/agent_wallets`, {
-          method: 'POST',
-          headers: { ...sbH(), 'Prefer': 'return=minimal' },
-          body: JSON.stringify({
-            agent_key:        agentKey,
-            arc_address:      cWallet.address,
-            circle_wallet_id: cWallet.walletId,
-            balance:          0,
-            wallet_type:      'circle',
-          }),
-        }).catch(e => console.error('[ArcPort] Supabase save failed:', e.message));
+        // Save to Supabase with retry
+        const saveToDb = async (retries = 3) => {
+          for (let i = 0; i < retries; i++) {
+            try {
+              const r = await fetch(`${process.env.SUPABASE_URL}/rest/v1/agent_wallets`, {
+                method: 'POST',
+                headers: { ...sbH(), 'Prefer': 'return=minimal' },
+                body: JSON.stringify({
+                  agent_key:        agentKey,
+                  arc_address:      cWallet.address,
+                  circle_wallet_id: cWallet.walletId,
+                  balance:          0,
+                  wallet_type:      'circle',
+                }),
+              });
+              if (r.ok) { console.log('[ArcPort] Supabase saved OK'); return; }
+              console.log('[ArcPort] Supabase attempt', i+1, 'status:', r.status);
+            } catch(e) {
+              console.log('[ArcPort] Supabase attempt', i+1, 'failed:', e.message);
+              if (i < retries - 1) await new Promise(r => setTimeout(r, 500));
+            }
+          }
+          console.error('[ArcPort] Supabase save failed after retries');
+        };
+        saveToDb();
 
         return res.status(201).json({
           success:          true,
