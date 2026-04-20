@@ -1,53 +1,67 @@
 # ArcPort
 
-ArcPort is an API marketplace where AI agents pay $0.001 USDC per call. Payments settle onchain via Arc in under one second — no subscriptions, no invoices, no credit cards.
+ArcPort is a machine-native API marketplace on Arc.
+
+AI agents pay **$0.001 USDC per request**. No subscriptions. No invoices. No human checkout flow.
+
+The goal is simple: an agent should be able to buy exactly one API response the moment it needs it.
 
 ---
 
-## The problem
+## Why it exists
 
-Most APIs today charge monthly subscriptions or require billing setup. For AI agents that make thousands of small, unpredictable requests across many providers, this model breaks down. An agent can't sign up for a plan.
+Most APIs are priced for humans. Plans, seats, billing dashboards, and monthly invoices all assume a person is making the purchase decision.
 
-ArcPort flips this: every API call is a micropayment. The agent pays exactly for what it uses, the moment it uses it — onchain, verifiable, no intermediary.
+Agents do not work that way. They need to pay for a service at runtime, autonomously, per request, and at very small price points.
+
+ArcPort is built around that constraint.
 
 ---
 
-## How it works
+## Payment model
 
-Each request goes through three steps:
+ArcPort currently supports two payment paths:
 
-1. **Auth** — request arrives with an agent key (`apk_...`) in the Authorization header
-2. **Payment** — 0.001 USDC is transferred onchain via Arc Testnet before the API is called
-3. **Delivery** — the API responds; the caller gets both the data and a transaction hash
+1. **Circle Nanopayments + x402 rails**
+   The client sends an `X-Payment` header containing an offchain EIP-3009 authorization. ArcPort verifies the payment, confirms it immediately, and returns the API response. Settlement is handled later in batches on Arc.
 
-The transaction hash links every piece of data to an onchain payment. You can verify any call at [testnet.arcscan.app](https://testnet.arcscan.app).
+2. **Legacy direct Arc transfer**
+   The client sends an `apk_...` agent key in the `Authorization` header. ArcPort executes a direct USDC transfer on Arc Testnet before the API response is returned. This path remains available for backwards compatibility and the current demo UI.
+
+In both cases, each request costs **$0.001 USDC** and returns verifiable payment metadata.
+
+Today, the public demo UI still uses the legacy `agent_key` flow in Playground. Machine clients can call the nanopayment path directly by sending an `X-Payment` header.
 
 ---
 
 ## Marketplace
 
-Six real APIs are available out of the box, all running against live public endpoints with no API keys required:
+Six APIs are available out of the box:
 
-| API | Data | Endpoint |
-|-----|------|----------|
+| API | What it returns | Source |
+|-----|------------------|--------|
 | Weather Pro | Temperature, humidity, wind by city | Open-Meteo |
-| FX Rates | Live exchange rates, 30+ currencies | Frankfurter / ECB |
+| FX Rates | Live exchange rates from the ECB | Frankfurter |
 | GeoIP Lookup | City, country, timezone, ISP from IP | ipapi.co |
-| Country Data | Capital, population, languages, currency | restcountries.com |
+| Country Data | Capital, population, languages, currencies | restcountries.com |
 | Crypto Prices | BTC, ETH, USDC prices with 24h change | CoinGecko |
-| Random Joke | Because end-to-end tests need data too | official-joke-api |
+| Random Joke | A simple test endpoint for agent integrations | official-joke-api |
 
-Anyone can register their own API and start earning USDC per call.
+Any developer can register an endpoint in the marketplace and charge per request instead of per month.
+
+The repo also includes [`api/arc-stats.js`](./api/arc-stats.js), a demo custom endpoint that returns live Arc chain data and can be registered in the marketplace.
 
 ---
 
 ## Webhooks
 
-ArcPort ships a built-in Webhook API — subscribe to any Arc address and receive HTTP POST notifications when USDC moves.
+ArcPort includes a webhook API.
+
+Subscribe to any Arc address and receive a signed HTTP POST when USDC moves.
 
 - Worker runs every 5 minutes via GitHub Actions cron
-- Queries Arc chain for Transfer events using ethers.js
-- Delivers signed payloads (`X-ArcPort-Signature: sha256=...`)
+- Arc is polled with `ethers.js` for `Transfer` events
+- Payloads are signed with `HMAC-SHA256` and delivered with `X-AgentPay-Signature`
 - Up to 10 active subscriptions per agent key
 
 Verify authenticity:
@@ -56,7 +70,7 @@ Verify authenticity:
 import { createHmac } from 'crypto'
 
 function verify(req, secret) {
-  const sig = req.headers['x-arcport-signature']
+  const sig = req.headers['x-agentpay-signature']
   const expected = 'sha256=' + createHmac('sha256', secret)
     .update(JSON.stringify(req.body))
     .digest('hex')
@@ -68,7 +82,8 @@ function verify(req, secret) {
 
 ## API reference
 
-### Create wallet
+### Create a legacy wallet
+
 ```http
 POST /api/wallet
 Content-Type: application/json
@@ -76,17 +91,32 @@ Content-Type: application/json
 { "action": "create" }
 ```
 
-Returns an `agent_key` and an `arc_address`. Fund the address at [faucet.circle.com](https://faucet.circle.com) (select Arc Testnet) to get 10 USDC.
+Returns an `agent_key` and an `arc_address`.
+
+### Create a Circle wallet
+
+```http
+POST /api/wallet
+Content-Type: application/json
+
+{ "action": "create_circle" }
+```
+
+Returns an `agent_key`, `arc_address`, and `circle_wallet_id`.
+
+Fund either wallet manually at [faucet.circle.com](https://faucet.circle.com) using **Arc Testnet**.
 
 ### Check balance
+
 ```http
 GET /api/wallet
 Authorization: Bearer apk_...
 ```
 
-Balance is read directly from Arc chain via `eth_call` — not from a database.
+Balance is read directly from Arc via `eth_call`. Circle-backed wallets can also expose Circle-specific balance metadata.
 
-### Call an API
+### Call an API with legacy auth
+
 ```http
 POST /api/pay-and-call
 Authorization: Bearer apk_...
@@ -98,23 +128,21 @@ Content-Type: application/json
 }
 ```
 
-Response:
-```json
+### Call an API with nanopayments
+
+```http
+POST /api/pay-and-call
+X-Payment: <base64-encoded payment payload>
+Content-Type: application/json
+
 {
-  "success": true,
-  "payment": {
-    "amount": "0.001",
-    "currency": "USDC",
-    "network": "Arc Testnet",
-    "tx_hash": "0xabc...def",
-    "explorer": "https://testnet.arcscan.app/tx/0xabc...def",
-    "finality_ms": 340
-  },
-  "data": { ... }
+  "api_id": "weather-1",
+  "params": { "city": "Berlin" }
 }
 ```
 
-### Subscribe to webhook
+### Subscribe to webhooks
+
 ```http
 POST /api/webhooks
 Authorization: Bearer apk_...
@@ -133,11 +161,12 @@ Content-Type: application/json
 
 | Layer | Technology |
 |-------|-----------|
-| Blockchain | Arc Testnet — EVM-compatible L1 by Circle |
-| Payments | ethers.js — direct USDC transfer via ERC-20 |
-| Backend | Vercel Functions — Node.js, ES modules |
-| Database | Supabase — Postgres, RLS enabled |
-| Cron | GitHub Actions — webhook worker every 5 minutes |
+| Chain | Arc Testnet |
+| Payments | Circle Dev-Controlled Wallets, Circle Nanopayments, x402 fallback |
+| Legacy fallback | Direct USDC transfer via `ethers.js` |
+| Backend | Vercel Functions, Node.js ES modules |
+| Database | Supabase Postgres |
+| Worker | GitHub Actions cron every 5 minutes |
 
 ---
 
@@ -145,13 +174,19 @@ Content-Type: application/json
 
 **Prerequisites:** Node.js 18+, a Supabase project, a Vercel account.
 
-**1. Database**
+### 1. Database
 
-Run `schema.sql` in your Supabase SQL Editor. Creates five tables: `agent_wallets`, `apis`, `transactions`, `webhook_subscriptions`, `webhook_deliveries`.
+Run `schema.sql` in your Supabase SQL Editor. It creates:
 
-**2. Platform wallet**
+- `agent_wallets`
+- `apis`
+- `transactions`
+- `webhook_subscriptions`
+- `webhook_deliveries`
 
-Generate an EOA and fund it with testnet USDC:
+### 2. Platform wallet
+
+For the legacy direct-transfer flow, generate and fund an EOA:
 
 ```bash
 node -e "
@@ -162,36 +197,43 @@ console.log('privateKey:', w.privateKey);
 "
 ```
 
-Then get USDC at [faucet.circle.com](https://faucet.circle.com) → Arc Testnet → paste address.
+Then get testnet USDC at [faucet.circle.com](https://faucet.circle.com) and select **Arc Testnet**.
 
-**3. Deploy to Vercel**
+### 3. Deploy to Vercel
 
-Fork this repo, import into Vercel, add environment variables:
+Import the repo into Vercel and configure environment variables:
 
-| Variable | Value |
-|----------|-------|
-| `SUPABASE_URL` | Your Supabase project URL |
-| `SUPABASE_ANON_KEY` | Supabase anon key |
-| `ARC_PRIVATE_KEY` | Platform wallet private key |
-| `PLATFORM_ARC_ADDRESS` | Platform wallet address |
-| `CRON_SECRET` | Any random string — protects the webhook worker |
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `SUPABASE_URL` | Yes | Supabase project URL |
+| `SUPABASE_ANON_KEY` | Yes | Supabase anon key |
+| `ARC_PRIVATE_KEY` | Legacy flow | Platform wallet private key |
+| `PLATFORM_ARC_ADDRESS` | Legacy flow | Platform wallet address |
+| `CIRCLE_API_KEY` | Circle flow | Circle API access |
+| `CIRCLE_ENTITY_SECRET` | Circle flow | Circle entity secret used to create Circle wallets |
+| `CIRCLE_WALLET_SET_ID` | Circle flow | Existing Circle wallet set ID |
+| `CRON_SECRET` | Yes | Protects `/api/webhook-worker` |
 
-**4. Configure GitHub Actions cron**
+### 4. Configure GitHub Actions cron
 
-Add the same `CRON_SECRET` value to your GitHub repository under `Settings → Secrets and variables → Actions`, then enable the `Webhook Worker` workflow. GitHub Actions calls the deployed `/api/webhook-worker` endpoint every 5 minutes.
+Add the same `CRON_SECRET` value to your GitHub repository under `Settings -> Secrets and variables -> Actions`, then enable the `Webhook Worker` workflow.
+
+GitHub Actions calls the deployed `/api/webhook-worker` endpoint every 5 minutes.
 
 ---
 
 ## Arc Network
 
-Arc is a Layer-1 blockchain by Circle where USDC is the native gas token. Every transaction on ArcPort costs a fixed, predictable amount in dollars — no ETH price exposure, no gas spikes.
+Arc is an EVM-compatible Layer 1 from Circle where USDC is the gas asset.
+
+That makes ArcPort a good fit for machine payments: fees are denominated in dollars instead of a volatile native token, and every request can be priced in the same unit the agent actually spends.
 
 | | |
 |-|-|
 | RPC | https://rpc.testnet.arc.network |
 | Chain ID | 5042002 |
 | USDC contract | `0x3600000000000000000000000000000000000000` |
-| Block explorer | https://testnet.arcscan.app |
+| Explorer | https://testnet.arcscan.app |
 | Faucet | https://faucet.circle.com |
 
 ---
