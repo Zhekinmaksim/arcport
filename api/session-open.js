@@ -12,6 +12,7 @@ import { resolveWalletByToken } from './_wallet-identity.js';
 import {
   getSessionContractAddress,
   getSessionDeposit,
+  getUsdcAllowanceAtomic,
   getUsdcBalanceAtomic,
   SESSION_OPEN_BUFFER_ATOMIC,
   parseOpenedChannel,
@@ -37,6 +38,25 @@ function formatAtomicUsdc(value) {
   const whole = atomic / 1000000n;
   const fraction = String(atomic % 1000000n).padStart(6, '0').slice(0, 3);
   return `${whole}.${fraction}`;
+}
+
+function circleFailureMessage(label, tx, txId) {
+  const details = [
+    tx?.errorReason,
+    tx?.errorCode,
+    tx?.errorDetails,
+    tx?.failureReason,
+    tx?.failureCode,
+    tx?.transactionError?.reason,
+    tx?.transactionError?.message,
+    tx?.error?.reason,
+    tx?.error?.message,
+  ]
+    .filter(Boolean)
+    .map(value => typeof value === 'string' ? value : JSON.stringify(value))
+    .join(' ');
+  const ref = tx?.txHash ? ` tx ${tx.txHash}` : ` Circle tx ${txId}`;
+  return `${label} failed: ${tx?.state || 'UNKNOWN'}${details ? ` (${details})` : ''}.${ref}`;
 }
 
 async function persistChannel(record) {
@@ -99,17 +119,44 @@ export default async function handler(req, res) {
       });
     }
 
-    const approveTxId = await createContractExecution({
-      walletId: wallet.circle_wallet_id,
-      walletAddress: wallet.arc_address,
-      contractAddress: USDC_ADDRESS,
-      abiFunctionSignature: 'approve(address,uint256)',
-      abiParameters: [contractAddress, deposit.deposit_atomic],
-      refId: `arcport-session-approve-${wallet.wallet_id}-${requestKey}`,
-    });
-    const approveTx = await waitForDeveloperTransaction(approveTxId);
-    if (approveTx.state !== 'COMPLETE') {
-      return res.status(500).json({ error: `USDC approve failed: ${approveTx.state}` });
+    const depositAtomic = BigInt(deposit.deposit_atomic);
+    let allowanceAtomic = await getUsdcAllowanceAtomic(wallet.arc_address, contractAddress);
+    let approveTx = null;
+    if (allowanceAtomic < depositAtomic) {
+      if (allowanceAtomic > 0n) {
+        const resetApproveTxId = await createContractExecution({
+          walletId: wallet.circle_wallet_id,
+          walletAddress: wallet.arc_address,
+          contractAddress: USDC_ADDRESS,
+          abiFunctionSignature: 'approve(address,uint256)',
+          abiParameters: [contractAddress, '0'],
+          refId: `arcport-session-approve-reset-${wallet.wallet_id}-${requestKey}`,
+        });
+        const resetApproveTx = await waitForDeveloperTransaction(resetApproveTxId);
+        if (resetApproveTx.state !== 'COMPLETE') {
+          return res.status(500).json({
+            error: circleFailureMessage('USDC approve reset', resetApproveTx, resetApproveTxId),
+            reason: 'session_approve_reset_failed',
+          });
+        }
+      }
+
+      const approveTxId = await createContractExecution({
+        walletId: wallet.circle_wallet_id,
+        walletAddress: wallet.arc_address,
+        contractAddress: USDC_ADDRESS,
+        abiFunctionSignature: 'approve(address,uint256)',
+        abiParameters: [contractAddress, deposit.deposit_atomic],
+        refId: `arcport-session-approve-${wallet.wallet_id}-${requestKey}`,
+      });
+      approveTx = await waitForDeveloperTransaction(approveTxId);
+      if (approveTx.state !== 'COMPLETE') {
+        return res.status(500).json({
+          error: circleFailureMessage('USDC approve', approveTx, approveTxId),
+          reason: 'session_approve_failed',
+        });
+      }
+      allowanceAtomic = depositAtomic;
     }
 
     const openTxId = await createContractExecution({
@@ -122,7 +169,10 @@ export default async function handler(req, res) {
     });
     const openTx = await waitForDeveloperTransaction(openTxId);
     if (openTx.state !== 'COMPLETE' || !openTx.txHash) {
-      return res.status(500).json({ error: `Session open failed: ${openTx.state}` });
+      return res.status(500).json({
+        error: circleFailureMessage('Session open', openTx, openTxId),
+        reason: 'session_open_failed',
+      });
     }
 
     const opened = await parseOpenedChannel({
@@ -144,7 +194,7 @@ export default async function handler(req, res) {
       cumulative_atomic: '0',
       calls_total: 0,
       status: 'open',
-      approve_tx_hash: approveTx.txHash || null,
+      approve_tx_hash: approveTx?.txHash || null,
       open_tx_hash: openTx.txHash,
       expires_at: new Date(opened.expiry_unix * 1000).toISOString(),
       metadata: {
@@ -169,12 +219,12 @@ export default async function handler(req, res) {
       deposit_usdc: deposit.deposit_usdc,
       deposit_atomic: deposit.deposit_atomic,
       expected_calls: deposit.expected_calls,
-      approve_tx_hash: approveTx.txHash || null,
+      approve_tx_hash: approveTx?.txHash || null,
       open_tx_hash: openTx.txHash,
       expires_at: new Date(opened.expiry_unix * 1000).toISOString(),
       explorer: {
         contract: `https://testnet.arcscan.app/address/${contractAddress}`,
-        approve_tx: approveTx.txHash ? `https://testnet.arcscan.app/tx/${approveTx.txHash}` : null,
+        approve_tx: approveTx?.txHash ? `https://testnet.arcscan.app/tx/${approveTx.txHash}` : null,
         open_tx: `https://testnet.arcscan.app/tx/${openTx.txHash}`,
       },
       next_steps: [

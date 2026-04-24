@@ -75,6 +75,13 @@ export async function getUsdcBalanceAtomic(address) {
   return BigInt((await usdc.balanceOf(address)).toString());
 }
 
+export async function getUsdcAllowanceAtomic(owner, spender) {
+  if (!owner || !spender) return 0n;
+  const provider = getSessionProvider();
+  const usdc = new Contract(USDC_ADDRESS, ['function allowance(address,address) view returns (uint256)'], provider);
+  return BigInt((await usdc.allowance(owner, spender)).toString());
+}
+
 export function getSessionDeposit({ depositUsdc, expectedCalls } = {}) {
   if (depositUsdc !== undefined && depositUsdc !== null && depositUsdc !== '') {
     const normalized = Number(depositUsdc);
