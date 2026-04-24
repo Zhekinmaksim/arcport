@@ -1,0 +1,14 @@
+.vercel
+.env*.local
+.DS_Store
+**/.DS_Store
+node_modules/
+cache/
+out/
+transcripts/
+skill/
+skill/scripts/__pycache__/
+*.pyc
+arc_audio.mp3
+ArcPort Intro _standalone.html
+ArcPort Outro _standalone.html

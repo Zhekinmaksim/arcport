@@ -1,242 +1,198 @@
 # ArcPort
 
-ArcPort is a machine-native API marketplace on Arc.
+ArcPort is an API payment layer for agents on Arc.
 
-AI agents pay **$0.001 USDC per request**. No subscriptions. No invoices. No human checkout flow.
+ArcPort V2 introduces session-based API payments for repeated agent usage.
 
-The goal is simple: an agent should be able to buy exactly one API response the moment it needs it.
+The marketplace also includes a paid `Gemini Inference` endpoint backed by Google AI Studio, so the same charge/session payment model can be shown against real model inference.
 
----
+ArcPort is not a consumer app. The runtime user is the agent. The web app is an operator console for provisioning wallets, opening sessions, inspecting proof, and demonstrating the payment flow.
 
-## Why it exists
+Read the UI this way:
 
-Most APIs are priced for humans. Plans, seats, billing dashboards, and monthly invoices all assume a person is making the purchase decision.
+- **wallet balance** = operator funds on Arc
+- **Gateway balance** = one-off charge-mode balance
+- **session budget** = repeated-usage budget locked for one open session
+- **refund** = unused session budget returned on close
 
-Agents do not work that way. They need to pay for a service at runtime, autonomously, per request, and at very small price points.
+For the [Agentic Economy on Arc hackathon](https://lablab.ai/ai-hackathons/nano-payments-arc), the repo is built around four things judges need to see:
 
-ArcPort is built around that constraint.
+- **charge mode** for one-off calls via Circle Nanopayments
+- **session mode** for repeated usage
+- **51 onchain transactions** already generated and documented
+- **margin explanation** for why `$0.001` pricing breaks under traditional gas
 
----
+Judge-facing docs:
 
-## Payment model
+- [JUDGE_QUICKSTART.md](docs/JUDGE_QUICKSTART.md)
+- [hackathon-evidence/README.md](hackathon-evidence/README.md)
+- [VIDEO_SCRIPT.md](submission/VIDEO_SCRIPT.md)
 
-ArcPort currently supports two payment paths:
+## Charge vs Session
 
-1. **Circle Nanopayments + x402 rails**
-   The client sends an `X-Payment` header containing an offchain EIP-3009 authorization. ArcPort verifies the payment, confirms it immediately, and returns the API response. Settlement is handled later in batches on Arc.
+Charge mode is the simple path. Session mode is the differentiator.
 
-2. **Legacy direct Arc transfer**
-   The client sends an `apk_...` agent key in the `Authorization` header. ArcPort executes a direct USDC transfer on Arc Testnet before the API response is returned. This path remains available for backwards compatibility and the current demo UI.
+- **charge mode**: one-off paid call through Circle Nanopayments
+- **session mode**: repeated usage with one onchain open, signed calls offchain, one onchain close, and refund
 
-In both cases, each request costs **$0.001 USDC** and returns verifiable payment metadata.
+ArcPort is reusable infrastructure. Any agent workflow that needs repeated API or model calls can use session mode instead of treating every request as a separate payment.
 
-Today, the public demo UI still uses the legacy `agent_key` flow in Playground. Machine clients can call the nanopayment path directly by sending an `X-Payment` header.
+## Who ArcPort Is For
 
----
+- **agent builders** who need a payment layer for API usage
+- **agent operators** who manage wallet identity, session budgets, and proof
+- **API providers** who want to monetize endpoints per call
 
-## Marketplace
+Humans use ArcPort to provision and inspect. Agents use ArcPort to pay and execute.
 
-Six APIs are available out of the box:
+## Product Surface
 
-| API | What it returns | Source |
-|-----|------------------|--------|
-| Weather Pro | Temperature, humidity, wind by city | Open-Meteo |
-| FX Rates | Live exchange rates from the ECB | Frankfurter |
-| GeoIP Lookup | City, country, timezone, ISP from IP | ipapi.co |
-| Country Data | Capital, population, languages, currencies | restcountries.com |
-| Crypto Prices | BTC, ETH, USDC prices with 24h change | CoinGecko |
-| Random Joke | A simple test endpoint for agent integrations | official-joke-api |
+ArcPort has two layers:
 
-Any developer can register an endpoint in the marketplace and charge per request instead of per month.
+- **web control plane** for wallet setup, session management, and proof
+- **API runtime layer** for machine-to-API payments
 
-The repo also includes [`api/arc-stats.js`](./api/arc-stats.js), a demo custom endpoint that returns live Arc chain data and can be registered in the marketplace.
+That split matters. The hackathon demo runs through the web control plane, but the production payment user is the agent calling the API.
 
----
+The next step after this submission is not a larger web app. It is a more agent-native runtime surface: stable machine-facing API contracts, SDKs, and client adapters so agents can open sessions, spend against them, and close them without depending on the browser flow.
 
-## Webhooks
+## How An Agent Integrates
 
-ArcPort includes a webhook API.
+The browser demo is only the control plane.
 
-Subscribe to any Arc address and receive a signed HTTP POST when USDC moves.
+The machine-facing path is simple:
 
-- Worker runs every 5 minutes via GitHub Actions cron
-- Arc is polled with `ethers.js` for `Transfer` events
-- Payloads are signed with `HMAC-SHA256` and delivered with `X-AgentPay-Signature`
-- Up to 10 active subscriptions per agent key
+1. `POST /api/session-open`
+2. `POST /api/session-call`
+3. `POST /api/session-close`
 
-Verify authenticity:
+That is the runtime surface the agent uses. The web app is there to provision wallets, inspect usage, and verify proof.
 
-```js
-import { createHmac } from 'crypto'
+## Charge Mode
 
-function verify(req, secret) {
-  const sig = req.headers['x-agentpay-signature']
-  const expected = 'sha256=' + createHmac('sha256', secret)
-    .update(JSON.stringify(req.body))
-    .digest('hex')
-  return sig === expected
-}
-```
+Use this when the agent needs one paid call.
 
----
+Flow:
 
-## API reference
+1. Request an API.
+2. Receive a `402` challenge.
+3. Sign `X-Payment` with a Circle wallet.
+4. Retry the request.
+5. ArcPort verifies payment and returns the response.
 
-### Create a legacy wallet
+Why it exists:
 
-```http
-POST /api/wallet
-Content-Type: application/json
+- it matches the core Circle Nanopayments path the hackathon asks for
+- it keeps one-off usage simple
+- it makes `$0.001` calls viable without a separate onchain payment per request
 
-{ "action": "create" }
-```
+Main files:
 
-Returns an `agent_key` and an `arc_address`.
+- [pay-and-call.js](api/pay-and-call.js)
+- [x-payment.js](api/x-payment.js)
+- [gateway.js](api/gateway.js)
 
-### Create a Circle wallet
+## Session Mode
 
-```http
-POST /api/wallet
-Content-Type: application/json
+Use this when the agent expects repeated usage in a short window.
 
-{ "action": "create_circle" }
-```
+Flow:
 
-Returns an `agent_key`, `arc_address`, and `circle_wallet_id`.
+1. Open a session onchain with a fixed USDC budget.
+2. Authorize repeated signed calls offchain for each call.
+3. Verify usage on every request.
+4. Close the session onchain once.
+5. Refund the unused balance.
 
-Fund either wallet manually at [faucet.circle.com](https://faucet.circle.com) using **Arc Testnet**.
+Why it exists:
 
-### Check balance
+- repeated usage should not require a fresh onchain payment step every time
+- the product needs a cleaner model than simple pay-per-call for high-frequency agent usage
+- this is the main new primitive in ArcPort V2
 
-```http
-GET /api/wallet
-Authorization: Bearer apk_...
-```
+Main files:
 
-Balance is read directly from Arc via `eth_call`. Circle-backed wallets can also expose Circle-specific balance metadata.
+- [ArcStreamChannel.sol](contracts/ArcStreamChannel.sol)
+- [session-open.js](api/session-open.js)
+- [session-call.js](api/session-call.js)
+- [session-close.js](api/session-close.js)
 
-### Call an API with legacy auth
+## 51 Onchain Transactions
 
-```http
-POST /api/pay-and-call
-Authorization: Bearer apk_...
-Content-Type: application/json
+ArcPort already generated **51 onchain transactions** from a reproducible session proof run.
 
-{
-  "api_id": "weather-1",
-  "params": { "city": "Berlin" }
-}
-```
+Breakdown:
 
-### Call an API with nanopayments
+- `17` approve transactions
+- `17` session open transactions
+- `17` session close transactions
 
-```http
-POST /api/pay-and-call
-X-Payment: <base64-encoded payment payload>
-Content-Type: application/json
+Artifacts:
 
-{
-  "api_id": "weather-1",
-  "params": { "city": "Berlin" }
-}
-```
+- [session-proof-latest.md](proof/session-proof-latest.md)
+- [session-proof-latest.json](proof/session-proof-latest.json)
+- [SESSION_PROOF_RUNBOOK.md](proof/SESSION_PROOF_RUNBOOK.md)
 
-### Subscribe to webhooks
+Deployed session contract:
 
-```http
-POST /api/webhooks
-Authorization: Bearer apk_...
-Content-Type: application/json
+- [0x594a7E570d1f915f1e11d504d0e89de28680cC98](https://testnet.arcscan.app/address/0x594a7E570d1f915f1e11d504d0e89de28680cC98?tab=txs)
 
-{
-  "arc_address": "0x...",
-  "url": "https://your-server.com/webhook",
-  "events": ["transfer.in", "transfer.out"]
-}
-```
+## Why `$0.001` Breaks With Traditional Gas
 
----
+If every `$0.001` API call required its own onchain payment transaction, gas would be larger than the call price itself.
 
-## Stack
+That breaks the model:
 
-| Layer | Technology |
-|-------|-----------|
-| Chain | Arc Testnet |
-| Payments | Circle Dev-Controlled Wallets, Circle Nanopayments, x402 fallback |
-| Legacy fallback | Direct USDC transfer via `ethers.js` |
-| Backend | Vercel Functions, Node.js ES modules |
-| Database | Supabase Postgres |
-| Worker | GitHub Actions cron every 5 minutes |
+- the unit economics turn negative
+- repeated usage becomes too expensive
+- machine-to-API usage becomes operationally noisy
 
----
+ArcPort handles this with two paths:
 
-## Self-hosting
+- **charge mode** removes per-call onchain execution from the buyer path
+- **session mode** amortizes onchain cost across repeated usage
 
-**Prerequisites:** Node.js 18+, a Supabase project, a Vercel account.
+## Demo Path
 
-### 1. Database
+The clean demo is:
 
-Run `schema.sql` in your Supabase SQL Editor. It creates:
+1. Open **Wallet**
+2. Open a session
+3. Go to **Playground**
+4. Make **3 paid calls** in session mode
+5. Return to **Wallet**
+6. Close the session
+7. Open **Proof Mode**
+8. Show `open tx`, `close tx`, `calls total`, `spent`, `refund`, and `status`
 
-- `agent_wallets`
-- `apis`
-- `transactions`
-- `webhook_subscriptions`
-- `webhook_deliveries`
+This is the path the video and judge docs follow.
 
-### 2. Platform wallet
+For the clearest hackathon demo, use **Gemini Inference** in session mode:
 
-For the legacy direct-transfer flow, generate and fund an EOA:
+1. open session
+2. run 3 Gemini prompts:
+   - one short bullet answer
+   - one one-line rewrite
+   - one short JSON response
+3. close session
+4. show refund and proof
 
-```bash
-node -e "
-const {ethers} = require('ethers');
-const w = ethers.Wallet.createRandom();
-console.log('address:', w.address);
-console.log('privateKey:', w.privateKey);
-"
-```
+## Local Run
 
-Then get testnet USDC at [faucet.circle.com](https://faucet.circle.com) and select **Arc Testnet**.
+Minimal local requirements:
 
-### 3. Deploy to Vercel
+- pull Vercel env into `.env.local`
+- apply [supabase-v2-migration.sql](supabase-v2-migration.sql) to the existing database
+- run the local dev server
+- set `GEMINI_API_KEY` or `GOOGLE_AI_STUDIO_API_KEY`
+- optionally set `GEMINI_MODEL` (default: `gemini-2.5-flash`)
 
-Import the repo into Vercel and configure environment variables:
+The repo still contains older compatibility paths for development, but the hackathon story is only:
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `SUPABASE_URL` | Yes | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Yes | Supabase anon key |
-| `ARC_PRIVATE_KEY` | Legacy flow | Platform wallet private key |
-| `PLATFORM_ARC_ADDRESS` | Legacy flow | Platform wallet address |
-| `CIRCLE_API_KEY` | Circle flow | Circle API access |
-| `CIRCLE_ENTITY_SECRET` | Circle flow | Circle entity secret used to create Circle wallets |
-| `CIRCLE_WALLET_SET_ID` | Circle flow | Existing Circle wallet set ID |
-| `CRON_SECRET` | Yes | Protects `/api/webhook-worker` |
-
-### 4. Configure GitHub Actions cron
-
-Add the same `CRON_SECRET` value to your GitHub repository under `Settings -> Secrets and variables -> Actions`, then enable the `Webhook Worker` workflow.
-
-GitHub Actions calls the deployed `/api/webhook-worker` endpoint every 5 minutes.
-
----
-
-## Arc Network
-
-Arc is an EVM-compatible Layer 1 from Circle where USDC is the gas asset.
-
-That makes ArcPort a good fit for machine payments: fees are denominated in dollars instead of a volatile native token, and every request can be priced in the same unit the agent actually spends.
-
-| | |
-|-|-|
-| RPC | https://rpc.testnet.arc.network |
-| Chain ID | 5042002 |
-| USDC contract | `0x3600000000000000000000000000000000000000` |
-| Explorer | https://testnet.arcscan.app |
-| Faucet | https://faucet.circle.com |
-
----
+- **charge mode**
+- **session mode**
+- **51 tx proof**
+- **margin explanation**
 
 ## License
 

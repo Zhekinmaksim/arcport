@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ArcPort — API Marketplace on Arc</title>
-<meta name="description" content="Pay-per-call Pay-per-call API gateway built on Arc. $0.001 USDC per request, settled in under 350ms.">
+<meta name="description" content="API payment layer for agents on Arc. $0.001 USDC per request, with charge mode for one-off calls and session mode for repeated usage.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -106,6 +106,10 @@ body {
   font-weight: 600;
   color: var(--t1);
   letter-spacing: -0.02em;
+}
+
+.brand-name .brand-port {
+  color: #5e86ff;
 }
 
 .brand-tag {
@@ -273,6 +277,7 @@ body {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   padding: 7px 15px;
   border-radius: var(--r);
@@ -285,6 +290,7 @@ body {
   line-height: 1;
   white-space: nowrap;
   text-decoration: none;
+  min-height: 34px;
 }
 
 .btn-primary {
@@ -307,8 +313,8 @@ body {
 .btn-danger { background: transparent; color: var(--t3); }
 .btn-danger:hover { color: var(--red); background: var(--red-d); }
 
-.btn-sm { padding: 5px 11px; font-size: 12px; }
-.btn-lg { padding: 11px 22px; font-size: 14px; }
+.btn-sm { padding: 5px 11px; font-size: 12px; min-height: 32px; }
+.btn-lg { padding: 11px 22px; font-size: 14px; min-height: 44px; }
 .btn-block { width: 100%; justify-content: center; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
@@ -331,6 +337,26 @@ tbody tr:last-child { border-bottom: none; }
 tbody tr:hover { background: rgba(99,130,255,0.03); }
 tbody td { padding: 11px 16px; font-size: 12.5px; vertical-align: middle; }
 .cell-mono { font-family: var(--mono); font-size: 11px; color: var(--t3); }
+.hist-main { font-size: 12.5px; color: var(--t1); }
+.hist-sub { font-size: 11px; color: var(--t3); margin-top: 2px; line-height: 1.45; }
+.hist-proof { font-family: var(--mono); font-size: 10.5px; color: var(--blue2); text-decoration: none; word-break: break-all; }
+.hist-proof:hover { text-decoration: underline; }
+.hist-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 9px;
+  border: 1px solid var(--b1);
+  background: var(--bg2);
+  color: var(--t2);
+}
+.hist-badge.session { color: var(--blue2); border-color: var(--blue-b); background: var(--blue-d); }
+.hist-badge.charge { color: var(--grn); border-color: var(--grn-b); background: var(--grn-d); }
+.hist-badge.open { color: var(--amb); border-color: rgba(251,191,36,0.18); background: rgba(251,191,36,0.08); }
+.hist-badge.closed { color: var(--grn); border-color: var(--grn-b); background: var(--grn-d); }
 
 /* ── Form ────────────────────────────────── */
 .form-stack { display: flex; flex-direction: column; gap: 14px; }
@@ -442,7 +468,7 @@ tbody td { padding: 11px 16px; font-size: 12.5px; vertical-align: middle; }
 }
 
 /* ── Playground layout ───────────────────── */
-.play-grid { display: grid; grid-template-columns: 340px 1fr; gap: 18px; align-items: start; }
+.play-grid { display: grid; grid-template-columns: minmax(420px, 0.88fr) minmax(560px, 1.12fr); gap: 18px; align-items: start; }
 
 /* ── Pay info box ────────────────────────── */
 .pay-box {
@@ -456,6 +482,39 @@ tbody td { padding: 11px 16px; font-size: 12.5px; vertical-align: middle; }
 .pay-line { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
 .pay-line span:first-child { color: var(--t3); }
 .pay-line span:last-child { font-family: var(--mono); font-size: 11px; color: var(--t1); }
+.flow-card {
+  background: var(--bg2);
+  border: 1px solid var(--b1);
+  border-radius: var(--r2);
+  padding: 14px 15px;
+  margin-bottom: 12px;
+}
+.flow-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.flow-card-title { font-size: 13px; font-weight: 600; color: var(--t1); letter-spacing:-0.01em; }
+.flow-steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+.flow-step {
+  border: 1px solid var(--b1);
+  border-radius: var(--r);
+  padding: 10px 11px 9px;
+  background: rgba(6,9,16,0.35);
+}
+.flow-step.is-active { border-color: var(--blue-b); background: var(--blue-d); }
+.flow-step.is-done { border-color: var(--grn-b); background: var(--grn-d); }
+.flow-step-num { font-family: var(--mono); font-size: 8.5px; color: var(--t3); letter-spacing: 0.1em; margin-bottom: 5px; }
+.flow-step-title { font-size: 12px; color: var(--t1); margin-bottom: 3px; }
+.flow-step-desc { font-size: 10.5px; color: var(--t3); line-height: 1.45; }
+.flow-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.flow-actions-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.flow-note { font-size: 11px; color: var(--t3); line-height: 1.55; margin-top: 10px; }
+.flow-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.flow-metric {
+  border: 1px solid var(--b1);
+  border-radius: var(--r);
+  padding: 9px 10px;
+  background: rgba(6,9,16,0.35);
+}
+.flow-metric-label { font-family: var(--mono); font-size: 9px; color: var(--t3); letter-spacing: 0.08em; margin-bottom: 5px; }
+.flow-metric-value { font-family: var(--mono); font-size: 14px; color: var(--t1); }
 
 /* ── Code block ──────────────────────────── */
 pre.code {
@@ -468,11 +527,12 @@ pre.code {
   line-height: 1.7;
   color: var(--t2);
   overflow-x: auto;
-  white-space: pre;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* ── Wallet ──────────────────────────────── */
-.wallet-grid { display: grid; grid-template-columns: 300px 1fr; gap: 18px; align-items: start; }
+.wallet-grid { display: grid; grid-template-columns: minmax(300px, 0.65fr) minmax(640px, 1.35fr); gap: 18px; align-items: start; }
 
 .balance-hero {
   background: var(--bg1);
@@ -499,6 +559,134 @@ pre.code {
 .balance-denom { font-size: 13px; color: var(--t3); }
 .balance-calls { font-size: 12px; color: var(--t3); margin-top: 12px; padding: 7px 14px; background: var(--bg2); border-radius: 5px; border: 1px solid var(--b1); }
 
+/* ── Proof Mode ─────────────────────────── */
+.proof-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.proof-hero {
+  background: linear-gradient(180deg, rgba(75,139,255,0.08), rgba(75,139,255,0.02));
+  border: 1px solid var(--b2);
+  border-radius: var(--r2);
+  padding: 22px 22px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.proof-hero::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -20px;
+  width: 220px;
+  height: 160px;
+  background: radial-gradient(ellipse, rgba(75,139,255,0.16), transparent 65%);
+  pointer-events: none;
+}
+.proof-label { font-family: var(--mono); font-size: 9px; color: var(--blue2); letter-spacing: 0.12em; margin-bottom: 10px; }
+.proof-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 8px; }
+.proof-sub { font-size: 12.5px; color: var(--t2); max-width: 680px; line-height: 1.65; }
+.proof-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+.proof-kpi {
+  background: rgba(6,9,16,0.42);
+  border: 1px solid var(--b1);
+  border-radius: var(--r);
+  padding: 12px 13px;
+}
+.proof-kpi-label { font-family: var(--mono); font-size: 9px; color: var(--t3); letter-spacing: 0.1em; margin-bottom: 8px; }
+.proof-kpi-value { font-family: var(--mono); font-size: 18px; color: var(--t1); letter-spacing: -0.02em; }
+.proof-kpi-sub { font-size: 11px; color: var(--t3); margin-top: 3px; }
+.proof-section { display: flex; flex-direction: column; gap: 14px; }
+.proof-card {
+  background: var(--bg1);
+  border: 1px solid var(--b1);
+  border-radius: var(--r2);
+  padding: 17px 18px;
+}
+.proof-card.span-2 { grid-column: 1 / -1; }
+.proof-card:hover { border-color: var(--b2); }
+.proof-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.proof-card-title { font-size: 13.5px; font-weight: 600; color: var(--t1); letter-spacing: -0.01em; }
+.proof-lines { display: flex; flex-direction: column; gap: 10px; }
+.proof-line { display: grid; grid-template-columns: 118px 1fr; gap: 12px; align-items: start; }
+.proof-line-label { font-family: var(--mono); font-size: 10px; color: var(--t3); letter-spacing: 0.08em; padding-top: 2px; }
+.proof-line-value { font-size: 12.5px; color: var(--t2); line-height: 1.6; word-break: break-word; }
+.proof-link { color: var(--blue2); text-decoration: none; }
+.proof-link:hover { text-decoration: underline; }
+.proof-timeline { display: flex; flex-direction: column; gap: 12px; }
+.proof-item { display: grid; grid-template-columns: 24px 1fr; gap: 12px; }
+.proof-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg3);
+  border: 1px solid var(--b2);
+  color: var(--blue2);
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+}
+.proof-item-title { font-size: 12.5px; color: var(--t1); margin-bottom: 3px; }
+.proof-item-desc { font-size: 12px; color: var(--t3); line-height: 1.6; }
+.proof-pre {
+  background: #060910;
+  border: 1px solid var(--b1);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--t2);
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.proof-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 10px;
+  border: 1px solid var(--b1);
+  background: var(--bg2);
+}
+.proof-status.open { color: var(--amb); border-color: rgba(251,191,36,0.18); background: rgba(251,191,36,0.08); }
+.proof-status.closed { color: var(--grn); border-color: var(--grn-b); background: var(--grn-d); }
+.proof-status.none { color: var(--t3); }
+.proof-status.busy { color: var(--blue2); border-color: var(--blue-b); background: var(--blue-d); }
+.proof-status.busy::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--blue2);
+  animation: statusPulse 1s ease-in-out infinite;
+}
+@keyframes statusPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+.proof-line-stack { display:flex; flex-direction:column; gap:7px; align-items:flex-start; }
+.proof-payload-copy { display:grid; gap:10px; }
+.proof-payload-block { display:grid; gap:6px; }
+.proof-payload-label { font-family: var(--mono); font-size: 9px; color: var(--t3); letter-spacing: 0.1em; }
+.proof-payload-text { font-size: 12.5px; color: var(--t2); line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+.proof-compare { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:12px; }
+.proof-compare-card {
+  background: rgba(6,9,16,0.42);
+  border: 1px solid var(--b1);
+  border-radius: var(--r);
+  padding: 13px 14px;
+}
+.proof-compare-label { font-family: var(--mono); font-size: 9px; color: var(--t3); letter-spacing: 0.1em; margin-bottom: 8px; }
+.proof-compare-title { font-size: 13px; color: var(--t1); font-weight: 600; margin-bottom: 4px; }
+.proof-compare-text { font-size: 12px; color: var(--t2); line-height: 1.65; }
+.wallet-action-grid-3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.wallet-action-grid-2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.wallet-section-note { font-size:11px; color:var(--t3); line-height:1.55; margin-top:8px; }
+.subtle-panel {
+  background: var(--bg2);
+  border: 1px solid var(--b1);
+  border-radius: var(--r);
+  padding: 12px 14px;
+}
 /* ── Webhooks ────────────────────────────── */
 .wh-grid { display: grid; grid-template-columns: 375px 1fr; gap: 18px; align-items: start; }
 
@@ -623,7 +811,8 @@ pre.code {
   .brand-name,.brand-tag,.nav-btn span:not(.nav-icon),.nav-section,.sb-foot{display:none}
   .main{margin-left:54px}
   .stats-row{grid-template-columns:1fr 1fr}
-  .play-grid,.wallet-grid,.wh-grid{grid-template-columns:1fr}
+  .play-grid,.wallet-grid,.wh-grid,.proof-grid{grid-template-columns:1fr}
+  .proof-kpis{grid-template-columns:1fr 1fr}
 }
 @media(max-width:600px){
   .sidebar{display:none}.main{margin-left:0}
@@ -631,6 +820,9 @@ pre.code {
   .stats-row{grid-template-columns:1fr 1fr}
   .form-row{grid-template-columns:1fr}
   .api-grid{grid-template-columns:1fr}
+  .proof-kpis{grid-template-columns:1fr}
+  .proof-line{grid-template-columns:1fr}
+  .flow-steps,.flow-metrics,.flow-actions,.flow-actions-3,.wallet-action-grid-2,.wallet-action-grid-3,.proof-compare{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -655,7 +847,7 @@ pre.code {
 
   <!-- Sidebar -->
   <nav class="sidebar">
-    <div class="brand" onclick="nav('marketplace')">
+    <div class="brand" onclick="nav('wallet')">
       <div class="brand-icon" style="background:none;padding:0;overflow:visible;box-shadow:none">
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -680,20 +872,23 @@ pre.code {
 </svg>
 </div>
       <div>
-        <div class="brand-name">ArcPort</div>
+        <div class="brand-name">Arc<span class="brand-port">Port</span></div>
         <div class="brand-tag">BUILT ON ARC</div>
       </div>
     </div>
 
     <div class="nav">
       <div class="nav-section">Explore</div>
-      <button class="nav-btn on" data-page="marketplace">
+      <button class="nav-btn" data-page="marketplace">
         <span class="nav-icon">&#9732;</span><span>Marketplace</span>
       </button>
 
       <div class="nav-section">Build</div>
       <button class="nav-btn" data-page="playground">
         <span class="nav-icon">&#9881;</span><span>Playground</span>
+      </button>
+      <button class="nav-btn" data-page="proof">
+        <span class="nav-icon">&#10022;</span><span>Proof Mode</span>
       </button>
       <button class="nav-btn" data-page="webhooks">
         <span class="nav-icon">&#10548;</span><span>Webhooks</span>
@@ -703,7 +898,7 @@ pre.code {
       </button>
 
       <div class="nav-section">Account</div>
-      <button class="nav-btn" data-page="wallet">
+      <button class="nav-btn on" data-page="wallet">
         <span class="nav-icon">&#9673;</span><span>Wallet</span>
       </button>
     </div>
@@ -726,19 +921,19 @@ pre.code {
   <div class="main">
 
     <div class="header">
-      <div class="hdr-path">arcport / <em id="hdr-page">marketplace</em></div>
+      <div class="hdr-path">arcport / <em id="hdr-page">wallet</em></div>
       <div class="hdr-right">
         <span class="chip ch-blue">$0.001 / call</span>
-        <span class="chip ch-grn" id="hdr-txs">0 txs</span>
+        <span class="chip ch-grn" id="hdr-txs">0 events</span>
         <span class="chip ch-dim">ARC TESTNET</span>
       </div>
     </div>
 
     <!-- Marketplace -->
-    <div class="page on" id="page-marketplace">
+    <div class="page" id="page-marketplace">
       <div class="pg-head">
         <div class="pg-title">Marketplace</div>
-        <div class="pg-sub">API gateway for agents. Pay $0.001 USDC per call, settled onchain in under 1 second.</div>
+        <div class="pg-sub">Web control plane for an API payment layer used by agents on Arc.</div>
       </div>
       <div class="stats-row" id="mkt-stats"></div>
       <div class="row g8 mb16" id="mkt-filters"></div>
@@ -749,7 +944,7 @@ pre.code {
     <div class="page" id="page-playground">
       <div class="pg-head">
         <div class="pg-title">Playground</div>
-        <div class="pg-sub">Make a real API call. $0.001 USDC deducted. Settled onchain via Arc in under 1 second.</div>
+        <div class="pg-sub">Web control plane for live agent calls. Charge mode handles one-off requests; session mode handles repeated usage under one budget.</div>
       </div>
       <div class="play-grid">
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -766,8 +961,16 @@ pre.code {
                   <input id="play-ep" readonly style="color:var(--t3)">
                 </div>
                 <div class="field mono-field">
-                  <div class="field-label">Agent key</div>
-                  <input id="play-key" placeholder="apk_...  (create one in Wallet)">
+                  <div class="field-label">Identity key</div>
+                  <input id="play-key" placeholder="awi_...  (create a Circle wallet in Wallet)">
+                </div>
+                <div class="field">
+                  <div class="field-label">Payment mode</div>
+                  <div class="row g8">
+                    <button id="mode-charge" class="btn btn-sm btn-secondary" onclick="setPaymentMode('charge')">Charge mode</button>
+                    <button id="mode-session" class="btn btn-sm btn-secondary" onclick="setPaymentMode('session')">Session mode</button>
+                  </div>
+                  <div class="field-hint" id="play-mode-hint">The browser is the operator view. Use charge mode for one-off calls. Use session mode when an agent will make repeated calls under one session budget.</div>
                 </div>
                 <div class="field mono-field">
                   <div class="field-label">Parameters (JSON)</div>
@@ -779,11 +982,13 @@ pre.code {
                 <div class="pay-box-label">PAYMENT &middot; ARC TESTNET</div>
                 <div class="pay-line"><span>Cost per call</span><span>$0.001 USDC</span></div>
                 <div class="pay-line"><span>Settlement</span><span class="c-grn">&lt;1 second</span></div>
-                <div class="pay-line"><span>Payment method</span><span id="play-pay-method" class="c-blue">Direct Arc</span></div>
-                <div class="pay-line"><span>Your balance</span><span id="play-balance" class="c-blue">0.000 USDC</span></div>
+                <div class="pay-line"><span>Payment method</span><span id="play-pay-method" class="c-blue">Circle X-Payment</span></div>
+                <div class="pay-line"><span id="play-balance-label">Operator wallet (onchain)</span><span id="play-balance" class="c-blue">0.000 USDC</span></div>
+                <div class="pay-line"><span>Charge-mode Gateway balance</span><span id="play-gateway-balance" class="c-blue">0.000 USDC</span></div>
               </div>
+              <div id="play-session-box" style="display:none"></div>
               <button id="play-btn" class="btn btn-primary btn-block btn-lg" onclick="runCall()">
-                Pay $0.001 &amp; Call API
+                Sign X-Payment &amp; Call API
               </button>
             </div>
           </div>
@@ -819,19 +1024,12 @@ pre.code {
           </div>
 
           <div class="card">
-            <div class="card-head"><span class="card-title">Integration</span></div>
-            <div style="padding:12px">
-              <pre class="code" id="play-code" style="font-size:11px"></pre>
-            </div>
-          </div>
-
-          <div class="card">
             <div class="card-head">
-              <span class="card-title">Recent payments</span>
-              <span class="c3 f12 mono" id="play-txcount">0 txs</span>
+              <span class="card-title">Recent activity</span>
+              <span class="c3 f12 mono" id="play-txcount">0 events</span>
             </div>
             <div class="tbl-wrap" id="play-txs">
-              <div style="padding:16px;text-align:center;color:var(--t3);font-size:12px">No transactions yet</div>
+              <div style="padding:16px;text-align:center;color:var(--t3);font-size:12px">No activity yet</div>
             </div>
           </div>
         </div>
@@ -839,10 +1037,10 @@ pre.code {
     </div>
 
     <!-- Wallet -->
-    <div class="page" id="page-wallet">
+    <div class="page on" id="page-wallet">
       <div class="pg-head">
         <div class="pg-title">Wallet</div>
-        <div class="pg-sub">Your USDC on Arc Testnet &mdash; balance is read directly from the blockchain</div>
+        <div class="pg-sub">Operator console for onchain balance, Gateway funding, and session lifecycle on Arc Testnet.</div>
       </div>
       <div class="wallet-grid">
         <div style="display:flex;flex-direction:column;gap:14px" id="wallet-left"></div>
@@ -856,6 +1054,15 @@ pre.code {
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Proof Mode -->
+    <div class="page" id="page-proof">
+      <div class="pg-head">
+        <div class="pg-title">Proof Mode</div>
+        <div class="pg-sub">Judge-facing proof for the current agent payment lifecycle: txs, calls, spent, refund, and status.</div>
+      </div>
+      <div id="proof-view"></div>
     </div>
 
     <!-- Webhooks -->
@@ -973,7 +1180,7 @@ function verify(req, secret) {
       <div class="row-between mb20">
         <div class="pg-head" style="margin-bottom:0">
           <div class="pg-title">My APIs</div>
-          <div class="pg-sub">Register your endpoint. Earn $0.001 USDC per call, settled onchain.</div>
+          <div class="pg-sub">Register your endpoint. Earn $0.001 USDC per call through wallet-native machine payments.</div>
         </div>
         <button class="btn btn-primary" onclick="openRegisterModal()">+ Register API</button>
       </div>
@@ -981,7 +1188,7 @@ function verify(req, secret) {
         <div class="empty">
           <div class="empty-icon">&#43;</div>
           <div class="empty-title">No APIs registered yet</div>
-          <div class="empty-desc">Deploy your API. Agents pay $0.001 USDC per call, settled onchain on Arc.</div>
+          <div class="empty-desc">Deploy your API. Agents pay $0.001 USDC per call through ArcPort.</div>
           <button class="btn btn-primary mt12" onclick="openRegisterModal()">Register API</button>
         </div>
       </div>
@@ -994,13 +1201,37 @@ function verify(req, secret) {
 'use strict';
 
 const S = {
-  page: 'marketplace', catFilter: 'All', calling: false, selectedId: null,
+  page: 'wallet', catFilter: 'All', calling: false, selectedId: null,
+  paymentMode: localStorage.getItem('ap_pm') || 'charge',
   key: localStorage.getItem('ap_k') || '',
+  identityKey: localStorage.getItem('ap_i') || '',
+  agentKey: localStorage.getItem('ap_g') || '',
+  walletId: localStorage.getItem('ap_wid') || '',
   addr: localStorage.getItem('ap_a') || '',
   walletType: localStorage.getItem('ap_wt') || 'eoa',
   circleWalletId: localStorage.getItem('ap_cw') || '',
-  balance: 0, txs: [], webhooks: [], myApis: [],
+  gatewayDepositHash: localStorage.getItem('ap_gd') || '',
+  gatewayApproveHash: localStorage.getItem('ap_ga') || '',
+  lastProof: (() => {
+    try { return JSON.parse(localStorage.getItem('ap_lastproof') || 'null'); }
+    catch (_) { return null; }
+  })(),
+  activeSession: (() => {
+    try { return JSON.parse(localStorage.getItem('ap_session') || 'null'); }
+    catch (_) { return null; }
+  })(),
+  gatewayBalance: 0,
+  gatewayPending: false,
+  balance: 0,
+  balanceLoading: false,
+  sessionAction: null,
+  txs: (() => {
+    try { return JSON.parse(localStorage.getItem('ap_txs') || '[]'); }
+    catch (_) { return []; }
+  })(),
+  webhooks: [], myApis: [],
   apis: [
+    { id:'gemini-1',    name:'Gemini Inference',cat:'AI',      calls:0, rev:0, ep:'generativelanguage.googleapis.com', desc:'Prompt Gemini through Google AI Studio and pay per inference. Useful for agent reasoning, rewriting, and extraction.', ex:'{"prompt":"Summarize why session-based API payments matter for agents in 3 bullet points."}', hint:'Try: summarize, rewrite, extract, classify' },
     { id:'weather-1',   name:'Weather Pro',   cat:'Data',    calls:0, rev:0, ep:'open-meteo.com',                desc:'Weather data for any city. Returns temperature, humidity, and wind speed in under 200ms.',    ex:'{"city":"Berlin"}',                               hint:'Try: Berlin, Tokyo, New York' },
     { id:'fx-1',        name:'FX Rates',       cat:'Finance', calls:0, rev:0, ep:'frankfurter.app',               desc:'Live FX rates from ECB. 30+ stablecoin-compatible currency pairs, updated daily.',      ex:'{"base":"USD","currencies":"EUR,GBP,JPY"}',        hint:'Bases: USD EUR GBP JPY' },
     { id:'geo-1',       name:'GeoIP Lookup',   cat:'Infra',   calls:0, rev:0, ep:'ipapi.co',                      desc:'Resolve any IP to city, country, timezone, and ISP. Useful for agent geolocation.',                        ex:'{"ip":"8.8.8.8"}',                                 hint:'Leave blank for your own IP' },
@@ -1010,11 +1241,263 @@ const S = {
   ],
 };
 
+try {
+  const backupRaw = localStorage.getItem('ap_wallet_backup');
+  if (backupRaw) {
+    const backup = JSON.parse(backupRaw);
+    if (!S.key && (backup.identity_key || backup.agent_key)) S.key = backup.identity_key || backup.agent_key || '';
+    if (!S.identityKey && backup.identity_key) S.identityKey = backup.identity_key;
+    if (!S.agentKey && backup.agent_key) S.agentKey = backup.agent_key;
+    if (!S.walletId && backup.wallet_id) S.walletId = backup.wallet_id;
+    if (!S.addr && backup.arc_address) S.addr = backup.arc_address;
+    if ((!S.walletType || S.walletType === 'eoa') && backup.wallet_type) S.walletType = backup.wallet_type;
+    if (!S.circleWalletId && backup.circle_wallet_id) S.circleWalletId = backup.circle_wallet_id;
+    if (!S.gatewayDepositHash && backup.gateway_deposit_hash) S.gatewayDepositHash = backup.gateway_deposit_hash;
+    if (!S.gatewayApproveHash && backup.gateway_approve_hash) S.gatewayApproveHash = backup.gateway_approve_hash;
+    if (!S.lastProof && backup.last_proof) S.lastProof = backup.last_proof;
+    if (!S.activeSession && backup.active_session) S.activeSession = backup.active_session;
+    if ((!S.paymentMode || S.paymentMode === 'charge') && backup.payment_mode) S.paymentMode = backup.payment_mode;
+  }
+} catch (_) {}
+
 const $ = id => document.getElementById(id);
 const fmtU = n => Number(n||0).toFixed(3);
 const fmtN = n => Number(n||0).toLocaleString();
 const now  = () => new Date().toLocaleTimeString('en', {hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
 const shortH = h => h ? h.slice(0,8)+'...'+h.slice(-6) : '-';
+const shortRef = s => s ? (String(s).length > 24 ? String(s).slice(0,12) + '...' + String(s).slice(-8) : String(s)) : '-';
+const hasOpenSession = () => !!(S.activeSession && S.activeSession.status === 'open');
+const hasAnySession = () => !!S.activeSession;
+const isSessionOpening = () => S.sessionAction === 'opening';
+const isSessionClosing = () => S.sessionAction === 'closing';
+const isSessionBusy = () => !!S.sessionAction;
+
+function sessionBudgetCalls(session) {
+  return Math.round(Number(session?.deposit_usdc || 0) / 0.001);
+}
+
+function sessionStatusText(status) {
+  if (status === 'open') return 'Channel open';
+  if (status === 'closed') return 'Channel closed';
+  return 'No session yet';
+}
+
+function proofLink(url, label) {
+  return url ? `<a class="hist-proof" href="${url}" target="_blank">${label}</a>` : '<span class="c3">-</span>';
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function isGeminiProof(proofLike) {
+  return proofLike?.api_id === 'gemini-1'
+    || proofLike?.api_name === 'Gemini Inference'
+    || proofLike?.response?.source === 'Google AI Studio / Gemini API'
+    || !!proofLike?.response?.model;
+}
+
+function normalizeGeminiOutputText(text) {
+  const raw = String(text || '').trim();
+  if (!raw) return '';
+  try {
+    const parsed = JSON.parse(raw);
+    return JSON.stringify(parsed, null, 2);
+  } catch (_) {
+    return raw;
+  }
+}
+
+function renderProofPayload(response, proofLike, emptyText) {
+  if (!response) {
+    return `<pre class="proof-pre">${escapeHtml(emptyText)}</pre>`;
+  }
+
+  if (isGeminiProof(proofLike)) {
+    const outputText = normalizeGeminiOutputText(response.output_text);
+    const usage = [
+      response?.usage?.prompt_tokens ?? null,
+      response?.usage?.output_tokens ?? null,
+      response?.usage?.total_tokens ?? null,
+    ];
+    const usageText = usage.some(v => v !== null)
+      ? `prompt ${response?.usage?.prompt_tokens ?? '-'} · output ${response?.usage?.output_tokens ?? '-'} · total ${response?.usage?.total_tokens ?? '-'}`
+      : 'Token usage unavailable';
+
+    return `
+      <div class="proof-payload-copy">
+        <div class="proof-payload-block">
+          <div class="proof-payload-label">PROMPT</div>
+          <div class="proof-payload-text">${escapeHtml(response.prompt || '-')}</div>
+        </div>
+        <div class="proof-payload-block">
+          <div class="proof-payload-label">OUTPUT</div>
+          <pre class="proof-pre">${escapeHtml(outputText || 'No text output')}</pre>
+        </div>
+        <div class="proof-payload-block">
+          <div class="proof-payload-label">MODEL</div>
+          <div class="proof-payload-text">${escapeHtml(response.model || '-')}</div>
+        </div>
+        <div class="proof-payload-block">
+          <div class="proof-payload-label">USAGE</div>
+          <div class="proof-payload-text">${escapeHtml(usageText)}</div>
+        </div>
+      </div>`;
+  }
+
+  return `<pre class="proof-pre">${escapeHtml(JSON.stringify(response, null, 2))}</pre>`;
+}
+
+function renderCompareCard() {
+  return `
+    <div class="proof-card span-2">
+      <div class="proof-card-head">
+        <div class="proof-card-title">Charge vs Session</div>
+      </div>
+      <div class="proof-sub" style="margin-bottom:12px">Charge mode is the simple path. Session mode is the differentiator.</div>
+      <div class="proof-compare">
+        <div class="proof-compare-card">
+          <div class="proof-compare-label">CHARGE</div>
+          <div class="proof-compare-title">One-off calls</div>
+          <div class="proof-compare-text">Use Circle Nanopayments for a single paid request. Best when the agent only needs one response.</div>
+        </div>
+        <div class="proof-compare-card">
+          <div class="proof-compare-label">SESSION</div>
+          <div class="proof-compare-title">Repeated usage</div>
+          <div class="proof-compare-text">Open once onchain, spend through signed calls, close once onchain, and refund the unused balance.</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function recordActivity(entry) {
+  S.txs.unshift({ ts: now(), ...entry });
+  S.txs = S.txs.slice(0, 60);
+  localStorage.setItem('ap_txs', JSON.stringify(S.txs));
+  updateActivityCounts();
+}
+
+function updateActivityCounts() {
+  const count = S.txs.length;
+  const playCount = $('play-txcount');
+  const walletCount = $('wallet-txcount');
+  const hdrCount = $('hdr-txs');
+  if (playCount) playCount.textContent = `${count} event${count === 1 ? '' : 's'}`;
+  if (walletCount) walletCount.textContent = `${count} record${count === 1 ? '' : 's'}`;
+  if (hdrCount) hdrCount.textContent = `${count} event${count === 1 ? '' : 's'}`;
+}
+
+function getSessionProofSurface() {
+  const last = S.lastProof && S.lastProof.mode === 'session' ? S.lastProof : null;
+  const session = S.activeSession || null;
+  if (!last && !session) return null;
+
+  return {
+    mode: 'session',
+    api_id: last?.api_id || '',
+    api_name: last?.api_name || '',
+    amount: last?.amount || 0.001,
+    response: last?.response || null,
+    note: last?.note || '',
+    at: last?.at || session?.closed_at || new Date().toISOString(),
+    payee: last?.payee || '',
+    payer: last?.payer || S.addr || '',
+    total_ms: last?.total_ms || 0,
+    finality_ms: last?.finality_ms || 0,
+    session_channel_id: last?.session_channel_id || session?.channel_id || '',
+    session_contract: last?.session_contract || session?.contract_address || '',
+    session_open_tx_hash: last?.session_open_tx_hash || session?.open_tx_hash || null,
+    session_close_tx_hash: last?.session_close_tx_hash || session?.close_tx_hash || null,
+    session_refund_usdc: last?.session_refund_usdc ?? session?.refunded_to_agent_usdc,
+    session_paid_to_platform_usdc: last?.session_paid_to_platform_usdc ?? session?.paid_to_platform_usdc,
+    session_status: last?.session_status || session?.status || 'open',
+    session_calls_total: last?.session_calls_total ?? session?.calls_total ?? 0,
+    session_remaining_usdc: last?.session_remaining_usdc ?? session?.remaining_usdc ?? 0,
+    cumulative_atomic: last?.cumulative_atomic || session?.cumulative_atomic || '0',
+    cumulative_usdc: last?.cumulative_usdc ?? session?.spent_usdc ?? 0,
+    session_deposit_usdc: session?.deposit_usdc ?? 0,
+    session_expires_at: session?.expires_at || '',
+  };
+}
+
+function renderActivityRow(tx, variant = 'wallet') {
+  const eventLabel =
+    tx.kind === 'session_open' ? 'Session opened' :
+    tx.kind === 'session_close' ? 'Session closed' :
+    tx.kind === 'session_call' ? (tx.api || 'Session call') :
+    tx.kind === 'charge_call' ? (tx.api || 'Charge call') :
+    tx.kind === 'gateway_deposit' ? 'Gateway deposit' :
+    'Activity';
+
+  const modeBadge =
+    tx.kind?.startsWith('session_') ? '<span class="hist-badge session">SESSION</span>' :
+    tx.kind === 'charge_call' ? '<span class="hist-badge charge">CHARGE</span>' :
+    tx.kind === 'gateway_deposit' ? '<span class="hist-badge">GATEWAY</span>' :
+    '<span class="hist-badge">EVENT</span>';
+
+  const statusBadge =
+    tx.status === 'open' ? '<span class="hist-badge open">OPEN</span>' :
+    tx.status === 'closed' ? '<span class="hist-badge closed">CLOSED</span>' :
+    '';
+
+  let details = '';
+  let proof = '<span class="c3">-</span>';
+
+  if (tx.kind === 'session_open') {
+    details = `Deposit ${fmtU(tx.deposit_usdc)} USDC · ${tx.expected_calls || sessionBudgetCalls(tx)} call budget`;
+    proof = proofLink(tx.open_explorer || (tx.open_tx_hash ? `https://testnet.arcscan.app/tx/${tx.open_tx_hash}` : ''), shortH(tx.open_tx_hash));
+  } else if (tx.kind === 'session_call') {
+    details = `Calls ${tx.calls_total || 0} · Spent ${fmtU(tx.cumulative_usdc || 0)} · Remaining ${fmtU(tx.remaining_usdc || 0)}`;
+    proof = `<span class="cell-mono">${tx.cumulative_atomic || '-'}</span>`;
+  } else if (tx.kind === 'session_close') {
+    details = `Spent ${fmtU(tx.spent_usdc || 0)} · Refund ${fmtU(tx.refund_usdc || 0)} · ${tx.calls_total || 0} call(s)`;
+    proof = proofLink(tx.close_explorer || (tx.close_tx_hash ? `https://testnet.arcscan.app/tx/${tx.close_tx_hash}` : ''), shortH(tx.close_tx_hash));
+  } else if (tx.kind === 'charge_call') {
+    details = `${fmtU(tx.amount || 0.001)} USDC · ${tx.finality_ms || 0}ms settle`;
+    proof = tx.settlement_id
+      ? `<span class="cell-mono">${shortH(tx.settlement_id)}</span>`
+      : proofLink(tx.explorer, shortH(tx.tx_hash));
+  } else if (tx.kind === 'gateway_deposit') {
+    details = `${fmtU(tx.amount || 0)} USDC deposited into Gateway`;
+    proof = proofLink(tx.explorer, shortH(tx.tx_hash));
+  }
+
+  const subline = [
+    modeBadge,
+    statusBadge,
+    tx.channel_id ? `<span class="hist-sub mono">${shortH(tx.channel_id)}</span>` : '',
+  ].filter(Boolean).join(' ');
+
+  if (variant === 'play') {
+    return `<tr>
+      <td class="cell-mono">${tx.ts}</td>
+      <td>
+        <div class="hist-main">${eventLabel}</div>
+        <div class="hist-sub">${subline}</div>
+      </td>
+      <td><div class="hist-main">${details}</div></td>
+      <td>${proof}</td>
+    </tr>`;
+  }
+
+  return `<tr>
+    <td class="cell-mono">${tx.ts}</td>
+    <td>
+      <div class="hist-main">${eventLabel}</div>
+      <div class="hist-sub">${subline}</div>
+    </td>
+    <td>
+      <div class="hist-main">${details}</div>
+      ${tx.api ? `<div class="hist-sub">${tx.api}</div>` : ''}
+    </td>
+    <td>${proof}</td>
+  </tr>`;
+}
 
 // Toast
 function toast(msg, type) {
@@ -1033,6 +1516,7 @@ function nav(page) {
   $('hdr-page').textContent = page === 'myapis' ? 'my-apis' : page;
   if (page === 'marketplace') renderMarket();
   if (page === 'playground')  renderPlayground();
+  if (page === 'proof')       renderProof();
   if (page === 'wallet')      renderWallet();
   if (page === 'webhooks')    loadWebhooks();
   if (page === 'myapis')      renderMyApis();
@@ -1043,17 +1527,32 @@ document.querySelectorAll('.nav-btn[data-page]').forEach(b => b.addEventListener
 function syncBalance() {
   $('sb-balance').innerHTML = fmtU(S.balance) + '<small>USDC</small>';
   const pb = $('play-balance');
-  if (pb) { pb.textContent = fmtU(S.balance) + ' USDC'; pb.style.color = S.balance < 0.002 ? 'var(--red)' : 'var(--blue2)'; }
+  const pbl = $('play-balance-label');
+  if (pbl) pbl.textContent = 'Operator wallet (onchain)';
+  if (pb) {
+    pb.textContent = fmtU(S.balance) + ' USDC';
+    const shouldWarn = S.paymentMode === 'session'
+      ? !hasOpenSession() && S.balance < 0.01
+      : S.balance < 0.002;
+    pb.style.color = shouldWarn ? 'var(--red)' : 'var(--blue2)';
+  }
+  const pgb = $('play-gateway-balance');
+  if (pgb) { pgb.textContent = fmtU(S.gatewayBalance) + ` USDC${S.gatewayPending ? ' (indexing)' : ''}`; pgb.style.color = S.gatewayBalance < 0.001 ? 'var(--amb)' : 'var(--grn)'; }
   const wb = $('wallet-balance-num'); if (wb) wb.textContent = fmtU(S.balance);
   const wc = $('wallet-balance-calls'); if (wc) wc.textContent = '~ ' + Math.floor(S.balance / 0.001).toLocaleString() + ' API calls remaining';
+  const wgb = $('wallet-gateway-balance'); if (wgb) wgb.textContent = fmtU(S.gatewayBalance);
+  const wgp = $('wallet-gateway-status'); if (wgp) wgp.textContent = S.gatewayPending ? 'Deposit indexed onchain, waiting for Gateway balance update' : 'Available for one-off charge-mode calls';
   const pm = $('play-pay-method');
   if (pm) {
-    if (S.walletType === 'circle') {
-      pm.textContent = '⚡ Nanopayments (gas-free)';
+    if (S.paymentMode === 'session') {
+      pm.textContent = hasOpenSession() ? 'Signed session call' : 'Open a session first';
+      pm.style.color = hasOpenSession() ? 'var(--blue2)' : 'var(--amb)';
+    } else if (S.walletType === 'circle') {
+      pm.textContent = 'Circle X-Payment';
       pm.style.color = 'var(--grn)';
     } else {
-      pm.textContent = 'Direct Arc';
-      pm.style.color = 'var(--blue2)';
+      pm.textContent = 'Circle wallet required';
+      pm.style.color = 'var(--amb)';
     }
   }
 }
@@ -1070,30 +1569,27 @@ function addLog(type, msg) {
 // TX table
 function renderTxTable(id) {
   const c = $(id); if (!c) return;
-  if (!S.txs.length) { c.innerHTML = '<div style="padding:16px;text-align:center;color:var(--t3);font-size:12px">No transactions yet</div>'; return; }
-  c.innerHTML = `<table><thead><tr><th>Time</th><th>API</th><th>Amount</th><th>Tx Hash</th></tr></thead><tbody>` +
-    S.txs.slice(0,8).map(tx => `<tr>
-      <td class="cell-mono">${tx.ts}</td>
-      <td class="f13">${tx.api}</td>
-      <td><span class="chip ch-blue" style="font-size:9px">${fmtU(tx.amount)}</span></td>
-      <td>${tx.explorer
-        ? `<a href="${tx.explorer}" target="_blank" class="mono" style="font-size:10px;color:var(--blue2);opacity:0.9;text-decoration:none">${shortH(tx.tx)}</a>`
-        : `<span class="cell-mono">${shortH(tx.tx)}</span>`}</td>
-    </tr>`).join('') + '</tbody></table>';
+  if (!S.txs.length) {
+    c.innerHTML = `<div style="padding:16px;text-align:center;color:var(--t3);font-size:12px">${id === 'play-txs' ? 'No activity yet' : 'No transaction history yet'}</div>`;
+    return;
+  }
+  const isPlay = id === 'play-txs';
+  const rows = S.txs.slice(0, isPlay ? 10 : 14).map(tx => renderActivityRow(tx, isPlay ? 'play' : 'wallet')).join('');
+  c.innerHTML = `<table><thead><tr><th>Time</th><th>Event</th><th>${isPlay ? 'Details' : 'Session stats'}</th><th>Proof</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // ── MARKETPLACE ────────────────────────────
 function renderMarket() {
   const all = [...S.apis, ...S.myApis];
   const shown = S.catFilter === 'All' ? all : all.filter(a => a.cat === S.catFilter);
-  const cats = ['All','Data','Finance','Infra','Other'];
+  const cats = ['All','AI','Data','Finance','Infra','Other'];
   const tc = all.reduce((a,x) => a+x.calls, 0);
   const tr = all.reduce((a,x) => a+x.rev, 0);
 
   $('mkt-stats').innerHTML = [
     { l:'APIs',         v: all.length,          s:'available' },
     { l:'Total calls',  v: fmtN(tc),            s:'all time' },
-    { l:'USDC settled', v: '$'+fmtU(tr),         s:'settled onchain on Arc' },
+    { l:'USDC volume',  v: '$'+fmtU(tr),         s:'confirmed through ArcPort' },
     { l:'Your balance', v: fmtU(S.balance),      s:'USDC remaining' },
   ].map(s => `<div class="stat-card"><div class="stat-lbl">${s.l}</div><div class="stat-val">${s.v}</div><div class="stat-sub">${s.s}</div></div>`).join('');
 
@@ -1131,9 +1627,389 @@ function renderPlayground() {
   sel.innerHTML = all.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
   if (S.selectedId) sel.value = S.selectedId;
   onApiChange(); syncBalance(); renderTxTable('play-txs');
-  $('play-txcount').textContent = S.txs.length + ' txs';
-  if (S.key) $('play-key').value = S.key;
+  if (S.identityKey) $('play-key').value = S.identityKey;
+  renderPlaygroundMode();
   updateCodeSnippet();
+  if (S.identityKey && S.walletType === 'circle') loadGatewayBalance();
+  updateActivityCounts();
+}
+
+function renderPlaygroundMode() {
+  const chargeBtn = $('mode-charge');
+  const sessionBtn = $('mode-session');
+  const hint = $('play-mode-hint');
+  const box = $('play-session-box');
+  const btn = $('play-btn');
+  if (!chargeBtn || !sessionBtn || !hint || !box || !btn) return;
+
+  chargeBtn.className = `btn btn-sm ${S.paymentMode === 'charge' ? 'btn-primary' : 'btn-secondary'}`;
+  sessionBtn.className = `btn btn-sm ${S.paymentMode === 'session' ? 'btn-primary' : 'btn-secondary'}`;
+
+  if (S.paymentMode === 'session') {
+    const session = S.activeSession;
+    const proof = getSessionProofSurface();
+    const status = session?.status || 'inactive';
+    const isOpen = status === 'open';
+    const isClosed = status === 'closed';
+    const opening = isSessionOpening();
+    const closing = isSessionClosing();
+    const sessionBusy = opening || closing;
+    const statusClass = opening ? 'busy' : closing ? 'busy' : isOpen ? 'open' : isClosed ? 'closed' : 'none';
+    const statusLabel = opening ? 'Opening session...' : closing ? 'Closing session...' : sessionStatusText(status);
+
+    hint.textContent = 'Open once onchain, let the agent make repeated signed calls offchain, then close once onchain and refund the unused balance.';
+    btn.textContent = opening
+      ? 'Opening session onchain...'
+        : closing
+          ? 'Closing session onchain...'
+          : isOpen
+      ? 'Call API in open session'
+      : 'Open 10-call session onchain';
+    btn.disabled = S.calling || sessionBusy;
+    box.style.display = 'block';
+
+    box.innerHTML = `
+      <div class="flow-card">
+        <div class="flow-card-head">
+          <div class="flow-card-title">Session demo flow</div>
+          <span class="proof-status ${statusClass}">${statusLabel}</span>
+        </div>
+
+        <div class="flow-steps">
+          <div class="flow-step ${opening ? 'is-active' : status !== 'inactive' ? 'is-done' : 'is-active'}">
+            <div class="flow-step-num">STEP 1</div>
+            <div class="flow-step-title">Open session</div>
+            <div class="flow-step-desc">${opening ? 'Waiting for onchain open' : status !== 'inactive' ? 'Session opened onchain' : 'Open onchain'}</div>
+          </div>
+          <div class="flow-step ${closing ? 'is-done' : isOpen ? 'is-active' : (isClosed ? 'is-done' : '')}">
+            <div class="flow-step-num">STEP 2</div>
+            <div class="flow-step-title">Make calls</div>
+            <div class="flow-step-desc">${isOpen || isClosed ? `${session?.calls_total || 0} signed call(s) offchain` : 'Signed calls offchain'}</div>
+          </div>
+          <div class="flow-step ${closing ? 'is-active' : isClosed ? 'is-done' : (isOpen ? 'is-active' : '')}">
+            <div class="flow-step-num">STEP 3</div>
+            <div class="flow-step-title">Close session</div>
+            <div class="flow-step-desc">${closing ? 'Waiting for onchain close' : isClosed ? 'Close + refund complete' : 'Close + refund onchain'}</div>
+          </div>
+          <div class="flow-step ${(proof && (isOpen || isClosed)) ? 'is-active' : ''}">
+            <div class="flow-step-num">STEP 4</div>
+            <div class="flow-step-title">See proof</div>
+            <div class="flow-step-desc">${proof ? 'Open Proof Mode' : 'Proof updates here'}</div>
+          </div>
+        </div>
+
+        ${hasAnySession() ? `
+          <div class="flow-metrics">
+            <div class="flow-metric">
+              <div class="flow-metric-label">SESSION</div>
+              <div class="flow-metric-value">${shortH(session?.channel_id)}</div>
+            </div>
+            <div class="flow-metric">
+              <div class="flow-metric-label">CALLS</div>
+              <div class="flow-metric-value">${session?.calls_total || 0}</div>
+            </div>
+            <div class="flow-metric">
+              <div class="flow-metric-label">SPENT</div>
+              <div class="flow-metric-value">${fmtU(session?.spent_usdc || 0)}</div>
+            </div>
+            <div class="flow-metric">
+              <div class="flow-metric-label">${isClosed ? 'UNUSED RETURNED' : 'REMAINING BUDGET'}</div>
+              <div class="flow-metric-value">${fmtU(isClosed ? (session?.refunded_to_agent_usdc || 0) : (session?.remaining_usdc || 0))}</div>
+            </div>
+          </div>
+        ` : ''}
+
+        ${!hasAnySession() ? `
+          <div class="flow-actions">
+            <button class="btn btn-secondary btn-sm" onclick="openSession('0.01')" ${sessionBusy ? 'disabled' : ''}>${opening ? 'Opening session...' : 'Open 10-call session'}</button>
+            <button class="btn btn-ghost btn-sm" onclick="nav('proof')">Open proof</button>
+          </div>
+        ` : isOpen ? `
+          <div class="flow-actions-3">
+            <button class="btn btn-secondary btn-sm" onclick="closeSession()" ${sessionBusy ? 'disabled' : ''}>${closing ? 'Closing session...' : 'Close session'}</button>
+            ${session?.open_tx_hash ? `<a class="btn btn-ghost btn-sm" href="https://testnet.arcscan.app/tx/${session.open_tx_hash}" target="_blank">Open tx</a>` : '<span></span>'}
+            <button class="btn btn-ghost btn-sm" onclick="nav('proof')">Open proof</button>
+          </div>
+        ` : `
+          <div class="flow-actions">
+            <button class="btn btn-secondary btn-sm" onclick="openSession('0.01')" ${sessionBusy ? 'disabled' : ''}>${opening ? 'Opening session...' : 'Open 10-call session'}</button>
+            <button class="btn btn-ghost btn-sm" onclick="nav('proof')">Open proof</button>
+          </div>
+          <div class="flow-actions mt8">
+            ${session?.open_tx_hash ? `<a class="btn btn-ghost btn-sm" href="https://testnet.arcscan.app/tx/${session.open_tx_hash}" target="_blank">Open tx</a>` : '<span></span>'}
+            ${session?.close_tx_hash ? `<a class="btn btn-ghost btn-sm" href="https://testnet.arcscan.app/tx/${session.close_tx_hash}" target="_blank">Close tx</a>` : '<span></span>'}
+          </div>
+        `}
+
+        <div class="flow-note">
+          ${!hasAnySession()
+            ? opening
+              ? 'Opening session onchain. Keep this page open; the session will appear here when Arc confirms it.'
+              : 'This browser is the control plane. The runtime agent opens one session, makes repeated signed calls, then closes once.'
+            : isOpen
+              ? closing
+                ? 'Closing session onchain. ArcPort is settling spend and returning the unused balance.'
+                : `Budget: ${sessionBudgetCalls(session)} max calls. Calls are signed offchain until you close once onchain.`
+              : `Session closed. Proof Mode shows open tx, close tx, spend, refund, and status.`}
+        </div>
+      </div>`;
+  } else {
+    hint.textContent = 'The browser is the operator view. Use charge mode for one-off calls. Use session mode when an agent will make repeated calls under one session budget.';
+    btn.textContent = 'Sign X-Payment & Call API';
+    btn.disabled = S.calling;
+    box.style.display = 'none';
+    box.innerHTML = '';
+  }
+}
+
+function saveProofState() {
+  const backup = {
+    payment_mode: S.paymentMode,
+    wallet_id: S.walletId,
+    identity_key: S.identityKey,
+    agent_key: S.agentKey,
+    arc_address: S.addr,
+    circle_wallet_id: S.circleWalletId,
+    wallet_type: S.walletType,
+    gateway_deposit_hash: S.gatewayDepositHash,
+    gateway_approve_hash: S.gatewayApproveHash,
+    active_session: S.activeSession,
+    last_proof: S.lastProof,
+    created_at: new Date().toISOString(),
+  };
+  localStorage.setItem('ap_wallet_backup', JSON.stringify(backup));
+  if (S.lastProof) localStorage.setItem('ap_lastproof', JSON.stringify(S.lastProof));
+}
+
+function saveSessionState() {
+  localStorage.setItem('ap_pm', S.paymentMode);
+  if (S.activeSession) localStorage.setItem('ap_session', JSON.stringify(S.activeSession));
+  else localStorage.removeItem('ap_session');
+  saveProofState();
+}
+
+function setPaymentMode(mode) {
+  S.paymentMode = mode === 'session' ? 'session' : 'charge';
+  saveSessionState();
+  renderPlayground();
+  if (S.page === 'proof') renderProof();
+}
+
+function renderProof() {
+  const c = $('proof-view'); if (!c) return;
+  const hasWallet = !!S.addr;
+  const proof = S.lastProof;
+  const sessionProof = getSessionProofSurface();
+  const hasDeposit = !!S.gatewayDepositHash;
+  const isSessionProof = !!sessionProof;
+  const settlementRef = proof ? (proof.tx_hash || proof.settlement_id || '-') : '-';
+
+  if (isSessionProof) {
+    const status = sessionProof.session_status || 'open';
+    const isClosed = status === 'closed';
+    const refundValue = sessionProof.session_refund_usdc !== undefined ? `${fmtU(sessionProof.session_refund_usdc)} USDC` : '-';
+    const remainingValue = `${fmtU(sessionProof.session_remaining_usdc || 0)} USDC`;
+    c.innerHTML = `
+      <div class="proof-hero mb16">
+        <div class="proof-label">SESSION PROOF</div>
+        <div class="proof-title">Open once onchain, sign repeated calls offchain, close once onchain</div>
+        <div class="proof-sub">The browser is the control plane. The runtime agent makes the calls. Open and close stay onchain; repeated usage in between is signed offchain against the same session budget.</div>
+        <div class="proof-kpis">
+          <div class="proof-kpi">
+            <div class="proof-kpi-label">STATUS</div>
+            <div class="proof-kpi-value">${status.toUpperCase()}</div>
+            <div class="proof-kpi-sub">Current session state</div>
+          </div>
+          <div class="proof-kpi">
+            <div class="proof-kpi-label">CALLS TOTAL</div>
+            <div class="proof-kpi-value">${sessionProof.session_calls_total || 0}</div>
+            <div class="proof-kpi-sub">Signed call(s)</div>
+          </div>
+          <div class="proof-kpi">
+            <div class="proof-kpi-label">CUMULATIVE SPENT</div>
+            <div class="proof-kpi-value">${fmtU(sessionProof.cumulative_usdc || 0)}</div>
+            <div class="proof-kpi-sub">Final amount due on close</div>
+          </div>
+          <div class="proof-kpi">
+            <div class="proof-kpi-label">${isClosed ? 'REFUND' : 'REMAINING'}</div>
+            <div class="proof-kpi-value">${fmtU(isClosed ? (sessionProof.session_refund_usdc || 0) : (sessionProof.session_remaining_usdc || 0))}</div>
+            <div class="proof-kpi-sub">${isClosed ? 'Returned on close' : 'Still locked in session'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="proof-grid">
+        <div class="proof-card">
+          <div class="proof-card-head">
+            <div class="proof-card-title">Session lifecycle</div>
+            <span class="proof-status ${status === 'open' ? 'open' : status === 'closed' ? 'closed' : 'none'}">${sessionStatusText(status)}</span>
+          </div>
+          <div class="proof-lines">
+            <div class="proof-line">
+              <div class="proof-line-label">Open tx</div>
+              <div class="proof-line-value">${sessionProof.session_open_tx_hash ? `<div class="proof-line-stack"><a class="proof-link mono" href="https://testnet.arcscan.app/tx/${sessionProof.session_open_tx_hash}" target="_blank" title="${sessionProof.session_open_tx_hash}">${shortH(sessionProof.session_open_tx_hash)}</a><a class="btn btn-ghost btn-sm" href="https://testnet.arcscan.app/tx/${sessionProof.session_open_tx_hash}" target="_blank">Open tx on Arcscan</a></div>` : '-'}</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Close tx</div>
+              <div class="proof-line-value">${sessionProof.session_close_tx_hash ? `<div class="proof-line-stack"><a class="proof-link mono" href="https://testnet.arcscan.app/tx/${sessionProof.session_close_tx_hash}" target="_blank" title="${sessionProof.session_close_tx_hash}">${shortH(sessionProof.session_close_tx_hash)}</a><a class="btn btn-ghost btn-sm" href="https://testnet.arcscan.app/tx/${sessionProof.session_close_tx_hash}" target="_blank">Close tx on Arcscan</a></div>` : '-'}</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Channel status</div>
+              <div class="proof-line-value"><span class="proof-status ${status === 'open' ? 'open' : status === 'closed' ? 'closed' : 'none'}">${sessionStatusText(status)}</span></div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Calls total</div>
+              <div class="proof-line-value mono">${sessionProof.session_calls_total || 0}</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Cumulative spent</div>
+              <div class="proof-line-value mono">${fmtU(sessionProof.cumulative_usdc || 0)} USDC</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Refund</div>
+              <div class="proof-line-value mono">${refundValue}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="proof-card">
+          <div class="proof-card-head">
+            <div class="proof-card-title">Session details</div>
+          </div>
+          <div class="proof-lines">
+            <div class="proof-line">
+              <div class="proof-line-label">Operator wallet</div>
+              <div class="proof-line-value mono" title="${S.addr || ''}">${hasWallet ? shortRef(S.addr) : '-'}</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Session ID</div>
+              <div class="proof-line-value mono" title="${sessionProof.session_channel_id || ''}">${shortRef(sessionProof.session_channel_id)}</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Runtime user</div>
+              <div class="proof-line-value">Agent</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Control plane</div>
+              <div class="proof-line-value">Web app</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">API</div>
+              <div class="proof-line-value">${sessionProof.api_id ? `${sessionProof.api_name || sessionProof.api_id}` : '-'}</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Remaining budget</div>
+              <div class="proof-line-value mono">${remainingValue}</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Contract</div>
+              <div class="proof-line-value">${sessionProof.session_contract ? `<a class="proof-link mono" href="https://testnet.arcscan.app/address/${sessionProof.session_contract}" target="_blank" title="${sessionProof.session_contract}">${shortRef(sessionProof.session_contract)}</a>` : '-'}</div>
+            </div>
+          </div>
+        </div>
+
+        ${renderCompareCard()}
+
+        <div class="proof-card span-2">
+          <div class="proof-card-head">
+            <div class="proof-card-title">Returned API payload</div>
+            <span class="chip ${sessionProof?.response ? 'ch-grn' : 'ch-dim'}">${sessionProof?.response ? 'UNLOCKED IN SESSION' : 'NO RESPONSE YET'}</span>
+          </div>
+          ${renderProofPayload(sessionProof?.response, sessionProof, '{\n  "status": "Open a session and make one call to capture payload proof"\n}')}
+        </div>
+      </div>`;
+    return;
+  }
+
+  c.innerHTML = `
+    <div class="proof-hero mb16">
+      <div class="proof-label">CHARGE PROOF</div>
+      <div class="proof-title">One-off paid call through Circle Nanopayments</div>
+        <div class="proof-sub">Use charge mode for one-off calls. The Gateway deposit is onchain; the paid call returns a Circle settlement reference and the API response.</div>
+      <div class="proof-kpis">
+        <div class="proof-kpi">
+          <div class="proof-kpi-label">GATEWAY</div>
+          <div class="proof-kpi-value">${fmtU(S.gatewayBalance)}</div>
+          <div class="proof-kpi-sub">Spendable balance</div>
+        </div>
+        <div class="proof-kpi">
+          <div class="proof-kpi-label">LAST CALL</div>
+          <div class="proof-kpi-value">${proof ? fmtU(proof.amount || 0) : '0.000'}</div>
+          <div class="proof-kpi-sub">${proof ? (proof.api_name || proof.api_id || 'API call') : 'No call yet'}</div>
+        </div>
+        <div class="proof-kpi">
+          <div class="proof-kpi-label">SETTLEMENT</div>
+          <div class="proof-kpi-value">${proof ? shortRef(settlementRef) : '-'}</div>
+          <div class="proof-kpi-sub">Circle settlement ID</div>
+        </div>
+        <div class="proof-kpi">
+          <div class="proof-kpi-label">LATENCY</div>
+          <div class="proof-kpi-value">${proof ? `${proof.total_ms}` : '-'}</div>
+          <div class="proof-kpi-sub">ms total</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="proof-grid">
+      <div class="proof-card">
+        <div class="proof-card-head">
+          <div class="proof-card-title">Charge proof</div>
+          <span class="chip ${proof ? 'ch-blue' : 'ch-dim'}">${proof ? 'PAYMENT RECORDED' : 'NO PAID CALL YET'}</span>
+        </div>
+        <div class="proof-lines">
+          <div class="proof-line">
+            <div class="proof-line-label">Deposit tx</div>
+            <div class="proof-line-value">${hasDeposit ? `<div class="proof-line-stack"><a class="proof-link mono" href="https://testnet.arcscan.app/tx/${S.gatewayDepositHash}" target="_blank" title="${S.gatewayDepositHash}">${shortH(S.gatewayDepositHash)}</a><a class="btn btn-ghost btn-sm" href="https://testnet.arcscan.app/tx/${S.gatewayDepositHash}" target="_blank">Open tx on Arcscan</a></div>` : '-'}</div>
+          </div>
+          <div class="proof-line">
+            <div class="proof-line-label">API</div>
+            <div class="proof-line-value">${proof ? `${proof.api_name || proof.api_id}` : '-'}</div>
+          </div>
+          <div class="proof-line">
+            <div class="proof-line-label">Circle settlement ID</div>
+            <div class="proof-line-value mono" title="${settlementRef}">${proof ? shortRef(settlementRef) : '-'}</div>
+          </div>
+          <div class="proof-line">
+            <div class="proof-line-label">Payee</div>
+            <div class="proof-line-value mono" title="${proof?.payee || ''}">${proof?.payee ? shortRef(proof.payee) : '-'}</div>
+          </div>
+          <div class="proof-line">
+            <div class="proof-line-label">Latency</div>
+            <div class="proof-line-value">${proof ? `${proof.finality_ms} ms payment confirmation, ${proof.total_ms} ms total` : '-'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="proof-card">
+        <div class="proof-card-head">
+          <div class="proof-card-title">Charge details</div>
+        </div>
+        <div class="proof-lines">
+          <div class="proof-line">
+            <div class="proof-line-label">Wallet</div>
+            <div class="proof-line-value mono" title="${S.addr || ''}">${hasWallet ? shortRef(S.addr) : '-'}</div>
+          </div>
+          <div class="proof-line">
+            <div class="proof-line-label">Gateway</div>
+            <div class="proof-line-value mono">${fmtU(S.gatewayBalance)} USDC</div>
+          </div>
+          <div class="proof-line">
+            <div class="proof-line-label">Onchain USDC</div>
+            <div class="proof-line-value mono">${fmtU(S.balance)} USDC</div>
+          </div>
+        </div>
+        </div>
+
+      ${renderCompareCard()}
+
+      <div class="proof-card span-2">
+        <div class="proof-card-head">
+          <div class="proof-card-title">Returned API payload</div>
+          <span class="chip ${proof?.response ? 'ch-grn' : 'ch-dim'}">${proof?.response ? 'UNLOCKED AFTER PAYMENT' : 'NO RESPONSE YET'}</span>
+        </div>
+        ${renderProofPayload(proof?.response, proof, '{\n  "status": "Run one paid API call to capture proof"\n}')}
+      </div>
+    </div>`;
 }
 
 function onApiChange() {
@@ -1148,70 +2024,324 @@ function onApiChange() {
 function updateCodeSnippet() {
   const c = $('play-code'); if (!c) return;
   const id = $('play-api') ? $('play-api').value : 'weather-1';
-  c.textContent = `const res = await fetch('/api/pay-and-call', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer ' + agentKey,\n    'Content-Type': 'application/json',\n  },\n  body: JSON.stringify({\n    api_id: '${id}',\n    params: { city: 'Berlin' },\n  }),\n})\nconst { data, payment } = await res.json()\n// payment.tx_hash — verifiable onchain at testnet.arcscan.app`;
+  const rawParams = ($('play-params')?.value || '{\n  "city": "Berlin"\n}').trim();
+  if (S.paymentMode === 'session') {
+    c.textContent = `// Open one onchain channel\nconst open = await post('/api/session-open', {\n  deposit_usdc: 0.01,\n})\n\n// Make repeated offchain-paid calls\nconst res = await post('/api/session-call', {\n  channel_id: open.channel_id,\n  api_id: '${id}',\n  params: ${rawParams},\n})\n\n// Close once and refund the unused balance\nconst close = await post('/api/session-close', {\n  channel_id: open.channel_id,\n})`;
+    return;
+  }
+  c.textContent = `// Ask ArcPort for payment requirements\nawait post('/api/pay-and-call', {\n  api_id: '${id}',\n  params: ${rawParams},\n})\n\n// Sign one gas-free X-Payment payload\nconst { x_payment } = await post('/api/x-payment', {\n  api_id: '${id}',\n})\n\n// Retry with X-Payment and unlock the response\nconst res = await post('/api/pay-and-call', {\n  api_id: '${id}',\n  params: ${rawParams},\n}, { 'X-Payment': x_payment })`;
+}
+
+function isTransientFetchError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return message.includes('fetch failed') || message.includes('failed to fetch') || message.includes('networkerror');
+}
+
+function makeIdempotencyKey(prefix = 'arcport') {
+  const suffix = globalThis.crypto?.randomUUID
+    ? globalThis.crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `${prefix}-${suffix}`;
+}
+
+async function fetchJsonWithIdempotencyRetry(url, options = {}, {
+  retryLabel,
+  pendingLabel,
+  maxAttempts = 12,
+  backoffMs = 900,
+} = {}) {
+  const headers = options.headers || {};
+  const hasIdempotencyKey = Boolean(headers['X-Idempotency-Key'] || headers['x-idempotency-key']);
+  let attempt = 0;
+  let retryLogged = false;
+  let pendingLogged = false;
+
+  while (attempt < maxAttempts) {
+    attempt += 1;
+    try {
+      const response = await fetch(url, options);
+      const json = await response.json().catch(() => ({}));
+      if (
+        hasIdempotencyKey &&
+        response.status === 202 &&
+        json?.idempotency_status === 'pending' &&
+        attempt < maxAttempts
+      ) {
+        if (pendingLabel && !pendingLogged) {
+          addLog('warn', pendingLabel);
+          pendingLogged = true;
+        }
+        await new Promise(resolve => setTimeout(resolve, Math.min(backoffMs * attempt, 2500)));
+        continue;
+      }
+      return { response, json, retried: attempt > 1 };
+    } catch (error) {
+      if (!hasIdempotencyKey || !isTransientFetchError(error) || attempt >= maxAttempts) throw error;
+      if (retryLabel && !retryLogged) {
+        addLog('warn', retryLabel);
+        retryLogged = true;
+      }
+      await new Promise(resolve => setTimeout(resolve, Math.min(backoffMs * attempt, 2500)));
+    }
+  }
 }
 
 async function runCall() {
-  if (S.calling) return;
+  if (S.calling || isSessionBusy()) return;
   const key = $('play-key').value.trim();
-  if (!key || !key.startsWith('apk_')) { toast('Enter your agent key — create one in Wallet', 'warn'); return; }
+  if (!key || !key.startsWith('awi_')) { toast('Playground requires a Circle wallet identity key', 'warn'); return; }
   const all = [...S.apis, ...S.myApis];
   const api = all.find(a => a.id === $('play-api').value);
-  let params = {}; try { params = JSON.parse($('play-params').value || '{}'); } catch(e) { toast('Invalid JSON', 'err'); return; }
+  let params = {};
+  try { params = JSON.parse($('play-params').value || '{}'); }
+  catch (e) { toast('Invalid JSON', 'err'); return; }
 
+  S.key = key;
+  S.identityKey = key;
+  localStorage.setItem('ap_k', key);
+  localStorage.setItem('ap_i', key);
+  saveSessionState();
+
+  if (S.paymentMode === 'session' && !hasOpenSession()) {
+    return openSession('0.01');
+  }
+
+  if (S.paymentMode === 'session') return runSessionCall(key, api, params);
+  return runChargeCall(key, api, params);
+}
+
+async function runChargeCall(key, api, params) {
   S.calling = true;
-  const btn = $('play-btn'); btn.disabled = true; btn.textContent = 'Settling on Arc...';
-  addLog('info', 'Sending request...');
+  const btn = $('play-btn'); btn.disabled = true; btn.textContent = 'Signing payment...';
+  addLog('info', 'Requesting x402 payment requirements...');
 
   try {
-    const r = await fetch('/api/pay-and-call', {
+    const preflight = await fetch('/api/pay-and-call', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
       body: JSON.stringify({ api_id: api.id, params }),
     });
-    const j = await r.json();
 
+    const preflightBody = await preflight.json().catch(() => ({}));
+    if (preflight.status !== 402) {
+      throw new Error(preflightBody.error || `Expected 402 preflight, got ${preflight.status}`);
+    }
+    addLog('pay', '402 received · seller requirements loaded');
+
+    if (S.gatewayBalance < 0.001) {
+      await loadGatewayBalance(false, key);
+      if (S.gatewayBalance < 0.001) {
+        addLog('warn', 'Gateway balance below $0.001');
+        throw new Error('Deposit USDC into Gateway in Wallet before calling the API');
+      }
+    }
+
+    btn.textContent = 'Creating X-Payment...';
+    const signRes = await fetch('/api/x-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+      body: JSON.stringify({ api_id: api.id }),
+    });
+    const signBody = await signRes.json();
+    if (!signRes.ok || !signBody.x_payment) throw new Error(signBody.error || 'Failed to create X-Payment');
+    addLog('pay', 'Circle signed EIP-3009 authorization');
+
+    btn.textContent = 'Settling with Gateway...';
+    const r = await fetch('/api/pay-and-call', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key,
+        'X-Payment': signBody.x_payment,
+      },
+      body: JSON.stringify({ api_id: api.id, params }),
+    });
+    const j = await r.json();
     if (!r.ok) {
-      addLog('err', j.error || 'Request failed');
-      if ((j.error||'').toLowerCase().includes('balance') || (j.error||'').toLowerCase().includes('insufficient')) {
-        addLog('info', 'Top up at faucet.circle.com (select Arc Testnet)');
-        toast('Insufficient balance — top up at faucet.circle.com', 'warn');
+      addLog('err', j.reason || j.error || 'Request failed');
+      if ((j.reason || '').toLowerCase().includes('insufficient_balance') || (j.error || '').toLowerCase().includes('balance')) {
+        addLog('warn', 'Gateway balance insufficient. Deposit more USDC in Wallet.');
+        toast('Gateway balance insufficient — deposit more USDC in Wallet', 'warn');
       } else {
-        toast(j.error || 'Error', 'err');
+        toast(j.reason || j.error || 'Error', 'err');
       }
     } else {
       const p = j.payment;
-      addLog('pay', 'ARC tx: ' + p.tx_hash.slice(0,20) + '...');
-      addLog('pay', `Confirmed in ${p.finality_ms}ms${p.payment_type === 'nanopayment' ? ' · gas-free ⚡' : ''}`);
+      const settlementRef = p.tx_hash || p.settlement_id || '';
+      addLog('pay', 'Settlement: ' + settlementRef.slice(0,20) + '...');
+      addLog('pay', `Confirmed in ${p.finality_ms}ms · gas-free ⚡`);
       addLog('call', api.name + ' responded (' + j.api.latency_ms + 'ms)');
-      if (j.data) addLog('info', JSON.stringify(j.data).slice(0, 90));
+      if (j.data) addLog('info', JSON.stringify(j.data).slice(0, 120));
 
-      S.balance = Math.max(0, +(S.balance - 0.001).toFixed(4));
-      S.txs.unshift({ ts: now(), api: api.name, amount: 0.001, tx: p.tx_hash, explorer: p.explorer });
+      S.gatewayBalance = Math.max(0, +(S.gatewayBalance - 0.001).toFixed(4));
+      recordActivity({
+        kind: 'charge_call',
+        api: api.name,
+        amount: Number(p.amount || 0.001),
+        tx_hash: p.tx_hash || null,
+        settlement_id: p.settlement_id || null,
+        explorer: p.explorer || null,
+        finality_ms: p.finality_ms || 0,
+      });
+      S.lastProof = {
+        mode: 'charge',
+        at: new Date().toISOString(),
+        api_id: j.api?.id || api.id,
+        api_name: api.name,
+        amount: Number(p.amount || 0.001),
+        tx_hash: p.tx_hash || null,
+        settlement_id: p.settlement_id || null,
+        payee: p.payee?.arc_address || '',
+        payer: p.payer?.arc_address || S.addr || '',
+        finality_ms: p.finality_ms || 0,
+        total_ms: j.total_ms || 0,
+        response: j.data || null,
+        note: p.note || '',
+      };
+      saveProofState();
       S.apis = S.apis.map(a => a.id === api.id ? {...a, calls: a.calls+1, rev: +(a.rev+0.001).toFixed(4)} : a);
 
       $('play-resp-card').style.display = 'block';
       $('play-resp-body').textContent = JSON.stringify(j, null, 2);
-      $('play-txcount').textContent = S.txs.length + ' txs';
-      $('hdr-txs').textContent = S.txs.length + ' txs';
       renderTxTable('play-txs');
       syncBalance();
-      toast('Called ' + api.name + ' · $0.001 USDC settled onchain');
+      updateActivityCounts();
+      if (S.page === 'proof') renderProof();
+      toast('Called ' + api.name + ' via X-Payment');
     }
   } catch(e) {
-    addLog('err', 'Network error: ' + e.message);
-    toast('Network error', 'err');
+    addLog('err', e.message);
+    toast(e.message || 'Request failed', 'err');
+  } finally {
+    S.calling = false;
+    btn.disabled = false;
+    renderPlaygroundMode();
+  }
+}
+
+async function runSessionCall(key, api, params) {
+  if (!hasOpenSession()) {
+    toast('Open a session first', 'warn');
+    return;
   }
 
-  S.calling = false;
-  btn.disabled = false;
-  btn.textContent = 'Pay $0.001 & Call API';
+  S.calling = true;
+  const btn = $('play-btn'); btn.disabled = true; btn.textContent = 'Authorizing signed session call...';
+  addLog('info', 'Authorizing signed session call...');
+
+  try {
+    const started = Date.now();
+    const requestKey = makeIdempotencyKey('session-call');
+    const { response: r, json: j, retried } = await fetchJsonWithIdempotencyRetry('/api/session-call', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key,
+        'X-Idempotency-Key': requestKey,
+      },
+      body: JSON.stringify({
+        channel_id: S.activeSession.channel_id,
+        api_id: api.id,
+        params,
+      }),
+    }, {
+      retryLabel: 'Transient local runtime failure during session call. Retrying with the same request id...',
+      pendingLabel: 'The previous session call is still processing. Waiting for the same request id...',
+      maxAttempts: 10,
+      backoffMs: 700,
+    });
+    const totalMs = Date.now() - started;
+
+    if (!r.ok) {
+      addLog('err', j.reason || j.error || 'Session call failed');
+      toast(j.reason || j.error || 'Session call failed', 'err');
+      return;
+    }
+    if (retried) addLog('warn', 'Recovered after retrying the same session call request id.');
+
+    addLog('pay', 'Voucher signed and verified offchain');
+    addLog('call', api.name + ' responded (' + j.api.latency_ms + 'ms)');
+    if (j.data) addLog('info', JSON.stringify(j.data).slice(0, 120));
+
+    S.activeSession = {
+      ...(S.activeSession || {}),
+      status: 'open',
+      channel_id: j.channel_id,
+      contract_address: j.contract_address || S.activeSession.contract_address,
+      cumulative_atomic: j.voucher.cumulative_atomic,
+      spent_usdc: j.session.spent_usdc,
+      remaining_usdc: j.session.remaining_usdc,
+      calls_total: j.session.calls_total,
+      remaining_calls: j.session.remaining_calls,
+      expires_at: j.session.expires_at,
+      last_signature: j.voucher.signature,
+      last_signer: j.voucher.signer,
+      last_api_id: api.id,
+      last_response_at: new Date().toISOString(),
+    };
+
+    recordActivity({
+      kind: 'session_call',
+      status: 'open',
+      api: api.name,
+      channel_id: j.channel_id,
+      amount: Number(j.payment?.amount || 0.001),
+      cumulative_atomic: j.voucher.cumulative_atomic,
+      cumulative_usdc: j.voucher.cumulative_usdc,
+      calls_total: j.session.calls_total,
+      remaining_usdc: j.session.remaining_usdc,
+    });
+    S.lastProof = {
+      mode: 'session',
+      at: new Date().toISOString(),
+      api_id: j.api?.id || api.id,
+      api_name: api.name,
+      amount: Number(j.payment?.amount || 0.001),
+      session_channel_id: j.channel_id,
+      session_contract: j.contract_address || S.activeSession.contract_address,
+      session_open_tx_hash: S.activeSession.open_tx_hash || null,
+      session_close_tx_hash: S.activeSession.close_tx_hash || null,
+      cumulative_atomic: j.voucher.cumulative_atomic,
+      cumulative_usdc: j.voucher.cumulative_usdc,
+      session_calls_total: j.session.calls_total,
+      session_remaining_usdc: j.session.remaining_usdc,
+      payee: j.payment?.payee?.arc_address || '',
+      payer: S.addr || '',
+      finality_ms: Math.max(0, totalMs - Number(j.api?.latency_ms || 0)),
+      total_ms: totalMs,
+      response: j.data || null,
+      note: j.payment?.note || '',
+    };
+    saveSessionState();
+
+    S.apis = S.apis.map(a => a.id === api.id ? {...a, calls: a.calls+1, rev: +(a.rev+0.001).toFixed(4)} : a);
+    $('play-resp-card').style.display = 'block';
+    $('play-resp-body').textContent = JSON.stringify(j, null, 2);
+    renderTxTable('play-txs');
+    syncBalance();
+    updateActivityCounts();
+    renderPlaygroundMode();
+    if (S.page === 'proof') renderProof();
+    toast('Called ' + api.name + ' inside the open session');
+  } catch (e) {
+    addLog('err', e.message);
+    toast(e.message || 'Session call failed', 'err');
+  } finally {
+    S.calling = false;
+    btn.disabled = false;
+    renderPlaygroundMode();
+  }
 }
 
 // ── WALLET ─────────────────────────────────
 function renderWallet() {
-  const hasWallet = S.key && S.key.startsWith('apk_');
+  const hasWallet = !!S.key;
   const isCircle  = S.walletType === 'circle';
+  const opening = isSessionOpening();
+  const closing = isSessionClosing();
+  const sessionBusy = opening || closing;
+  const sessionChipClass = opening || closing ? 'ch-blue' : (S.activeSession?.status === 'closed') ? 'ch-blue' : hasOpenSession() ? 'ch-grn' : 'ch-dim';
+  const sessionChipText = opening ? 'OPENING' : closing ? 'CLOSING' : S.activeSession?.status === 'closed' ? 'CLOSED' : hasOpenSession() ? 'OPEN' : 'INACTIVE';
 
   $('wallet-left').innerHTML = hasWallet ? `
     <div class="balance-hero">
@@ -1219,6 +2349,15 @@ function renderWallet() {
       <div class="balance-num" id="wallet-balance-num">${fmtU(S.balance)}</div>
       <div class="balance-denom">USDC</div>
       <div class="balance-calls" id="wallet-balance-calls">~ ${Math.floor(S.balance/0.001).toLocaleString()} API calls remaining</div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+        <div class="card-head"><span class="card-title">Operator wallet</span></div>
+      <div class="card-body">
+        <div class="mono" style="font-size:10px;color:var(--t3);letter-spacing:0.08em;margin-bottom:6px">ARC ADDRESS</div>
+        <div class="mono" style="font-size:12px;color:var(--t1);word-break:break-all;margin-bottom:10px">${S.addr || '-'}</div>
+        <div class="mono" style="font-size:10px;color:var(--t3);letter-spacing:0.08em;margin-bottom:6px">IDENTITY KEY</div>
+        <div class="mono" style="font-size:12px;color:var(--grn);word-break:break-all">${S.identityKey || '-'}</div>
+      </div>
     </div>
     <div class="card">
       <div class="card-head">
@@ -1229,9 +2368,19 @@ function renderWallet() {
       </div>
       <div class="card-body">
         <div class="form-stack">
+          ${S.walletId ? `
           <div class="field mono-field">
-            <div class="field-label">Agent key</div>
-            <input readonly value="${S.key}" onclick="this.select()" style="cursor:pointer;color:var(--blue2)">
+            <div class="field-label">Wallet ID</div>
+            <input readonly value="${S.walletId}" onclick="this.select()" style="cursor:pointer;color:var(--blue2)">
+          </div>` : ''}
+          ${S.identityKey ? `
+          <div class="field mono-field">
+            <div class="field-label">Identity key</div>
+            <input readonly value="${S.identityKey}" onclick="this.select()" style="cursor:pointer;color:var(--grn)">
+          </div>` : ''}
+          <div class="field mono-field">
+            <div class="field-label">Legacy agent key</div>
+            <input readonly value="${S.agentKey || S.key}" onclick="this.select()" style="cursor:pointer;color:var(--blue2)">
           </div>
           <div class="field mono-field">
             <div class="field-label">Arc address</div>
@@ -1243,42 +2392,98 @@ function renderWallet() {
             <input readonly value="${S.circleWalletId}" onclick="this.select()" style="cursor:pointer;color:var(--grn)">
           </div>` : ''}
         </div>
-        <div class="row g8 mt12">
-          <a href="https://testnet.arcscan.app/address/${S.addr}" target="_blank" class="btn btn-secondary btn-sm" style="flex:1;justify-content:center">Explorer</a>
-          <button class="btn btn-ghost btn-sm" onclick="resetWallet()">Reset</button>
+        <button class="btn btn-secondary btn-block mt12" onclick="refreshBalance()">Refresh onchain balance</button>
+        <div class="wallet-action-grid-2 mt8">
+          <a href="https://testnet.arcscan.app/address/${S.addr}" target="_blank" class="btn btn-ghost btn-sm">Arcscan address</a>
+          <button class="btn btn-ghost btn-sm" onclick="resetWallet()">Reset local wallet</button>
         </div>
-        <button class="btn btn-secondary btn-block mt8" onclick="refreshBalance()">Refresh balance</button>
         <div class="divider"></div>
+        <div class="subtle-panel" style="margin-bottom:12px">
+          <div class="mono" style="font-size:9px;color:var(--t2);letter-spacing:0.1em;margin-bottom:6px">HOW TO READ THIS</div>
+          <div class="c3 f12" style="line-height:1.6">
+            Wallet balance = operator wallet funds on Arc.<br>
+            Gateway balance = funds available for one-off charge-mode calls.<br>
+            Session budget = funds locked for one open session.<br>
+            Refund = unused session funds returned on close.
+          </div>
+        </div>
         ${isCircle ? `
-        <div style="background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.18);border-radius:var(--r);padding:12px 14px;margin-bottom:12px">
-          <div class="mono" style="font-size:9px;color:var(--grn);letter-spacing:0.1em;margin-bottom:6px">CIRCLE NANOPAYMENTS ENABLED</div>
-          <p class="c3 f12" style="line-height:1.6">Gas-free payments via Circle Gateway. Each API call signs an EIP-3009 authorization &mdash; zero gas, instant confirmation.</p>
-        </div>` : `
-        <div style="background:var(--blue-d);border:1px solid var(--blue-b);border-radius:var(--r);padding:12px 14px;margin-bottom:12px">
-          <div class="mono" style="font-size:9px;color:var(--blue2);letter-spacing:0.1em;margin-bottom:6px">LEGACY MODE</div>
-          <p class="c3 f12" style="line-height:1.6">Direct Arc onchain transfer. Upgrade to Circle Wallet below to enable gas-free Nanopayments.</p>
-        </div>`}
+        <div class="subtle-panel" style="margin-bottom:12px">
+          <div class="mono" style="font-size:9px;color:var(--t2);letter-spacing:0.1em;margin-bottom:6px">GATEWAY BALANCE</div>
+          <div style="font-family:var(--mono);font-size:18px;color:var(--t1);margin-bottom:4px" id="wallet-gateway-balance">${fmtU(S.gatewayBalance)}</div>
+          <div class="c3 f12" id="wallet-gateway-status">${S.gatewayPending ? 'Deposit indexed onchain, waiting for Gateway balance update' : 'Available for one-off charge-mode calls'}</div>
+          ${S.gatewayDepositHash ? `
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--b1)">
+            <div class="mono" style="font-size:9px;color:var(--t3);letter-spacing:0.1em;margin-bottom:6px">LAST GATEWAY DEPOSIT</div>
+            <a href="https://testnet.arcscan.app/tx/${S.gatewayDepositHash}" target="_blank" class="mono" style="font-size:11px;color:var(--blue2);text-decoration:none;word-break:break-all">${S.gatewayDepositHash}</a>
+            <div class="c3 f12" style="margin-top:6px">Onchain proof for charge mode.</div>
+          </div>` : ''}
+          <div class="wallet-action-grid-2 mt12">
+            <button class="btn btn-secondary btn-sm" onclick="loadGatewayBalance(true)">Refresh Gateway</button>
+            <button class="btn btn-primary btn-sm" onclick="depositGateway('1.0')">Deposit 1 USDC</button>
+          </div>
+        </div>` : ''}
+        ${isCircle ? `
+        <div class="subtle-panel" style="margin-bottom:12px">
+          <div class="row-between" style="margin-bottom:6px">
+            <div class="mono" style="font-size:9px;color:var(--blue2);letter-spacing:0.1em">SESSION MODE</div>
+            <span class="chip ${sessionChipClass}" style="font-size:9px">${sessionChipText}</span>
+          </div>
+          ${hasAnySession() ? `
+            <div class="pay-line"><span>Session ID</span><span class="mono">${shortH(S.activeSession.channel_id)}</span></div>
+            <div class="pay-line"><span>Session budget</span><span>${fmtU(S.activeSession.deposit_usdc)} USDC</span></div>
+            <div class="pay-line"><span>Spent</span><span>${fmtU(S.activeSession.spent_usdc || 0)} USDC</span></div>
+            <div class="pay-line"><span>${S.activeSession.status === 'closed' ? 'Unused balance returned' : 'Remaining budget'}</span><span class="${S.activeSession.status === 'closed' ? 'c-blue' : 'c-grn'}">${fmtU(S.activeSession.status === 'closed' ? (S.activeSession.refunded_to_agent_usdc || 0) : (S.activeSession.remaining_usdc || 0))} USDC</span></div>
+            <div class="pay-line"><span>Calls</span><span>${S.activeSession.calls_total || 0} / ${Math.round(Number(S.activeSession.deposit_usdc || 0) / 0.001)}</span></div>
+            <div class="pay-line"><span>Expiry</span><span class="mono">${new Date(S.activeSession.expires_at).toLocaleTimeString('en', { hour12:false, hour:'2-digit', minute:'2-digit' })}</span></div>
+            ${S.activeSession.status === 'closed'
+              ? `
+                <button class="btn btn-primary btn-block mt12" onclick="openSession('0.01')" ${sessionBusy ? 'disabled' : ''}>${opening ? 'Opening session onchain...' : 'Open 10-call session'}</button>
+                <div class="wallet-action-grid-3 mt8">
+                  <a class="btn btn-secondary btn-sm" href="https://testnet.arcscan.app/tx/${S.activeSession.open_tx_hash}" target="_blank">Open tx</a>
+                  <a class="btn btn-secondary btn-sm" href="https://testnet.arcscan.app/tx/${S.activeSession.close_tx_hash}" target="_blank">Close tx</a>
+                  <button class="btn btn-ghost btn-sm" onclick="nav('proof')">Open proof</button>
+                </div>
+                <div class="wallet-section-note">Session closed. Proof Mode now shows the full lifecycle.</div>
+              `
+              : `
+                <button class="btn btn-primary btn-block mt12" onclick="closeSession()" ${sessionBusy ? 'disabled' : ''}>${closing ? 'Closing session onchain...' : 'Close session onchain'}</button>
+                <div class="wallet-action-grid-3 mt8">
+                  <a class="btn btn-secondary btn-sm" href="https://testnet.arcscan.app/tx/${S.activeSession.open_tx_hash}" target="_blank">Open tx</a>
+                  <button class="btn btn-ghost btn-sm" onclick="nav('playground')">Go to Playground</button>
+                  <button class="btn btn-ghost btn-sm" onclick="nav('proof')">Open proof</button>
+                </div>
+                <div class="wallet-section-note">${closing ? 'Closing session onchain. ArcPort is settling spend and returning unused budget.' : 'The browser opens and closes the session. The runtime agent spends against it through repeated signed calls in between.'}</div>
+              `}
+          ` : `
+            <p class="c3 f12" style="line-height:1.6;margin-bottom:10px">${opening ? 'Opening session onchain. Waiting for Arc/Circle response...' : 'Open one session onchain, let the agent make repeated signed calls offchain, then close once and return the unused balance.'}</p>
+            <div class="wallet-action-grid-2">
+              <button class="btn btn-primary btn-sm" onclick="openSession('0.01')" ${sessionBusy ? 'disabled' : ''}>${opening ? 'Opening session...' : 'Open 10-call session'}</button>
+              <button class="btn btn-ghost btn-sm" onclick="nav('proof')">Open proof</button>
+            </div>
+          `}
+        </div>` : ''}
         <button class="btn btn-primary btn-block" onclick="window.open('https://faucet.circle.com','_blank')">
           Fund wallet on Arc Testnet &rarr;
         </button>
-        <p class="c3 f12 mono" style="text-align:center;margin-top:8px">faucet.circle.com &rarr; Arc Testnet &rarr; paste address &rarr; 10 USDC free</p>
+        <p class="c3 f12 mono" style="text-align:center;margin-top:8px">${isCircle ? 'Fund wallet  →  deposit to Gateway  →  open session' : 'faucet.circle.com  →  Arc Testnet  →  fund wallet'}</p>
       </div>
     </div>` : `
     <div class="card" style="border-color:var(--blue-b)">
       <div class="card-body" style="text-align:center;padding:28px 24px">
         <div style="width:46px;height:46px;background:var(--blue-d);border:1px solid var(--blue-b);border-radius:10px;display:grid;place-items:center;margin:0 auto 14px;font-size:20px">&#9673;</div>
-        <div style="font-size:16px;font-weight:600;letter-spacing:-0.02em;margin-bottom:6px">Choose your wallet type</div>
-        <p class="c3 f13" style="line-height:1.6;margin-bottom:20px">Get an Arc address and agent key for pay-per-call API access.</p>
+        <div style="font-size:16px;font-weight:600;letter-spacing:-0.02em;margin-bottom:6px">Choose your wallet path</div>
+        <p class="c3 f13" style="line-height:1.6;margin-bottom:20px">Create a wallet identity for pay-per-call API access on Arc.</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
           <button id="wallet-create-btn" class="btn btn-secondary btn-block" onclick="createWallet('eoa')" style="flex-direction:column;gap:4px;padding:14px 8px;height:auto;min-height:80px">
             <span style="font-size:18px">&#9673;</span>
             <span style="font-weight:600;font-size:12px;white-space:nowrap">EOA Wallet</span>
-            <span class="c3" style="font-size:10px;font-weight:400;white-space:nowrap">Direct Arc transfer</span>
+            <span class="c3" style="font-size:10px;font-weight:400;white-space:nowrap">Legacy compatibility</span>
           </button>
           <button id="wallet-create-circle-btn" class="btn btn-primary btn-block" onclick="createWallet('circle')" style="flex-direction:column;gap:4px;padding:14px 8px;height:auto;min-height:80px">
             <span style="font-size:18px">&#10024;</span>
             <span style="font-weight:600;font-size:12px;white-space:nowrap">Circle Wallet</span>
-            <span style="font-size:10px;font-weight:400;opacity:0.85;white-space:nowrap">Gas-free Nanopayments</span>
+            <span style="font-size:10px;font-weight:400;opacity:0.85;white-space:nowrap">V2 identity + X-Payment</span>
           </button>
         </div>
         <p class="c3" style="font-size:10px;font-family:var(--mono);text-align:center;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Free &middot; Powered by Circle &middot; Arc Testnet</p>
@@ -1290,24 +2495,25 @@ function renderWallet() {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div style="padding:12px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r)">
             <div class="mono c-blue" style="font-size:9px;letter-spacing:0.1em;margin-bottom:6px">EOA WALLET</div>
-            <div class="f12 c2" style="line-height:1.6">Standard Arc wallet. Pays gas per call. Simple setup, works immediately.</div>
+            <div class="f12 c2" style="line-height:1.6">Legacy-compatible auth flow for local testing. Useful for quick setup and backwards compatibility.</div>
           </div>
           <div style="padding:12px;background:var(--bg2);border:1px solid rgba(52,211,153,0.2);border-radius:var(--r)">
-            <div class="mono" style="font-size:9px;letter-spacing:0.1em;margin-bottom:6px;color:var(--grn)">CIRCLE WALLET</div>
-            <div class="f12 c2" style="line-height:1.6">Circle Dev-Controlled Wallet. Gas-free via Nanopayments. Requires Circle API setup.</div>
+            <div class="mono" style="font-size:9px;letter-spacing:0.1em;margin-bottom:6px;color:var(--grn)">CIRCLE WALLET V2</div>
+            <div class="f12 c2" style="line-height:1.6">Agent-owned Circle wallet identity. Deposit USDC into Gateway, then use gas-free X-Payment calls in the Playground.</div>
           </div>
         </div>
         <div class="divider"></div>
         <div class="steps">
-          <div class="step"><div class="step-num">1</div><div class="step-text">Create wallet (EOA for quick start, Circle for Nanopayments)</div></div>
-          <div class="step"><div class="step-num">2</div><div class="step-text">Go to faucet.circle.com &rarr; Arc Testnet &rarr; paste address &rarr; 10 USDC free</div></div>
-          <div class="step"><div class="step-num">3</div><div class="step-text">Use your agent key in Playground to make paid API calls</div></div>
+          <div class="step"><div class="step-num">1</div><div class="step-text">Create wallet (EOA for compatibility, Circle for ArcPort V2)</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Fund the Circle wallet at faucet.circle.com on Arc Testnet</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">Deposit some USDC into Gateway, then use identity_key in Playground</div></div>
         </div>
       </div>
     </div>`;
   renderTxTable('wallet-txs');
-  $('wallet-txcount').textContent = S.txs.length + ' records';
   syncBalance();
+  if (isCircle && S.identityKey) loadGatewayBalance();
+  updateActivityCounts();
 }
 
 async function createWallet(type = 'eoa') {
@@ -1320,25 +2526,41 @@ async function createWallet(type = 'eoa') {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Failed');
 
-    S.key  = d.agent_key;
+    S.key  = d.identity_key || d.agent_key;
+    S.identityKey   = d.identity_key || '';
+    S.agentKey      = d.agent_key || '';
+    S.walletId      = d.wallet_id || '';
     S.addr = d.arc_address;
     S.walletType     = d.wallet_type || type;
     S.circleWalletId = d.circle_wallet_id || '';
+    S.gatewayBalance = 0;
+    S.gatewayPending = false;
     S.balance        = 0;
+    S.gatewayDepositHash = '';
+    S.gatewayApproveHash = '';
+    S.lastProof = null;
+    S.activeSession = null;
+    S.paymentMode = 'charge';
     localStorage.setItem('ap_k',  S.key);
+    localStorage.setItem('ap_i',  S.identityKey);
+    localStorage.setItem('ap_g',  S.agentKey);
+    localStorage.setItem('ap_wid', S.walletId);
     localStorage.setItem('ap_a',  S.addr);
     localStorage.setItem('ap_wt', S.walletType);
     localStorage.setItem('ap_cw', S.circleWalletId);
-    // Also persist full wallet data locally as backup
-    localStorage.setItem('ap_wallet_backup', JSON.stringify({
-      agent_key: S.key, arc_address: S.addr,
-      circle_wallet_id: S.circleWalletId, wallet_type: S.walletType,
-      created_at: new Date().toISOString(),
-    }));
+    localStorage.removeItem('ap_gd');
+    localStorage.removeItem('ap_ga');
+    localStorage.removeItem('ap_lastproof');
+    localStorage.removeItem('ap_session');
+    localStorage.removeItem('ap_txs');
+    localStorage.setItem('ap_pm', 'charge');
+    S.txs = [];
+    saveSessionState();
 
     renderWallet(); syncBalance();
+    if (S.page === 'proof') renderProof();
     toast(type === 'circle'
-      ? 'Circle Wallet created — fund at faucet.circle.com'
+      ? 'Circle Wallet created — fund it, then deposit to Gateway'
       : 'Wallet created — fund at faucet.circle.com');
   } catch(e) {
     toast('Error: ' + e.message, 'err');
@@ -1349,22 +2571,296 @@ async function createWallet(type = 'eoa') {
 
 function resetWallet() {
   localStorage.removeItem('ap_k'); localStorage.removeItem('ap_a');
+  localStorage.removeItem('ap_i'); localStorage.removeItem('ap_g'); localStorage.removeItem('ap_wid');
   localStorage.removeItem('ap_wt'); localStorage.removeItem('ap_cw');
-  S.key = ''; S.addr = ''; S.walletType = 'eoa'; S.circleWalletId = ''; S.balance = 0;
-  renderWallet(); syncBalance(); toast('Wallet reset');
+  localStorage.removeItem('ap_gd'); localStorage.removeItem('ap_ga');
+  localStorage.removeItem('ap_lastproof');
+  localStorage.removeItem('ap_session');
+  localStorage.removeItem('ap_txs');
+  localStorage.setItem('ap_pm', 'charge');
+  S.key = ''; S.identityKey = ''; S.agentKey = ''; S.walletId = '';
+  S.addr = ''; S.walletType = 'eoa'; S.circleWalletId = ''; S.balance = 0;
+  S.gatewayDepositHash = ''; S.gatewayApproveHash = '';
+  S.lastProof = null;
+  S.activeSession = null;
+  S.paymentMode = 'charge';
+  S.txs = [];
+  S.gatewayBalance = 0; S.gatewayPending = false;
+  renderWallet(); renderPlaygroundMode(); syncBalance(); if (S.page === 'proof') renderProof(); toast('Wallet reset');
 }
 
-async function refreshBalance() {
-  if (!S.key) return;
+async function refreshBalance(showToast = false) {
+  if (!S.key || S.balanceLoading) return;
+  S.balanceLoading = true;
   try {
     const r = await fetch('/api/wallet', { headers: {'Authorization': 'Bearer ' + S.key} });
     const d = await r.json();
     if (r.ok && d.balance_usdc !== undefined) {
       S.balance = d.balance_usdc;
+      if (S.identityKey && S.walletType === 'circle') await loadGatewayBalance();
       syncBalance();
-      toast('Balance: ' + fmtU(S.balance) + ' USDC');
+      if (showToast) toast('Balance: ' + fmtU(S.balance) + ' USDC');
     }
-  } catch(e) { toast('Refresh failed', 'err'); }
+  } catch(e) {
+    if (showToast) toast('Refresh failed', 'err');
+  } finally {
+    S.balanceLoading = false;
+  }
+}
+
+async function loadGatewayBalance(showToast = false, authKey = S.identityKey) {
+  if (!authKey) return;
+  try {
+    const r = await fetch('/api/gateway', { headers: { 'Authorization': 'Bearer ' + authKey } });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Gateway lookup failed');
+    S.gatewayBalance = d.gateway_balance_usdc || 0;
+    S.gatewayPending = false;
+    syncBalance();
+    if (showToast) toast('Gateway balance: ' + fmtU(S.gatewayBalance) + ' USDC');
+  } catch (e) {
+    if (showToast) toast('Gateway lookup failed', 'err');
+  }
+}
+
+async function depositGateway(amount = '1.0') {
+  if (!S.identityKey || S.walletType !== 'circle') {
+    toast('Create a Circle wallet first', 'warn');
+    return;
+  }
+
+  addLog('info', 'Depositing ' + amount + ' USDC into Gateway...');
+  try {
+    const r = await fetch('/api/gateway', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + S.identityKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ amount }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Gateway deposit failed');
+    S.gatewayBalance = d.gateway_balance_usdc || S.gatewayBalance;
+    S.gatewayPending = !!d.pending_indexing;
+    S.balance = Math.max(0, +(S.balance - Number(amount)).toFixed(3));
+    S.gatewayApproveHash = d.approve_hash || S.gatewayApproveHash;
+    S.gatewayDepositHash = d.deposit_hash || S.gatewayDepositHash;
+    localStorage.setItem('ap_gd', S.gatewayDepositHash);
+    localStorage.setItem('ap_ga', S.gatewayApproveHash);
+    saveProofState();
+    recordActivity({
+      kind: 'gateway_deposit',
+      amount: Number(amount),
+      tx_hash: d.deposit_hash || '',
+      explorer: d.deposit_hash ? `https://testnet.arcscan.app/tx/${d.deposit_hash}` : null,
+    });
+    renderWallet();
+    syncBalance();
+    refreshBalance(false);
+    if (S.page === 'proof') renderProof();
+    if (d.pending_indexing) {
+      addLog('warn', 'Deposit sent onchain, waiting for Gateway indexing');
+      toast('Deposit sent. Gateway balance is still indexing.', 'warn');
+    } else {
+      addLog('pay', 'Gateway balance updated to ' + fmtU(S.gatewayBalance) + ' USDC');
+      toast('Gateway funded: ' + fmtU(S.gatewayBalance) + ' USDC');
+    }
+  } catch (e) {
+    addLog('err', e.message);
+    toast('Gateway deposit failed', 'err');
+  }
+}
+
+async function openSession(amount = '0.01') {
+  if (!S.identityKey || S.walletType !== 'circle') {
+    toast('Create a Circle wallet first', 'warn');
+    return;
+  }
+  if (hasOpenSession()) {
+    toast('Close the current session first', 'warn');
+    return;
+  }
+  if (isSessionBusy()) {
+    toast('Session request already in progress', 'warn');
+    return;
+  }
+
+  S.sessionAction = 'opening';
+  renderWallet();
+  renderPlaygroundMode();
+  addLog('info', 'Opening session for ' + amount + ' USDC...');
+  try {
+    const requestKey = makeIdempotencyKey('session-open');
+    const { response: r, json: d, retried } = await fetchJsonWithIdempotencyRetry('/api/session-open', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + S.identityKey,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': requestKey,
+      },
+      body: JSON.stringify({ deposit_usdc: Number(amount) }),
+    }, {
+      retryLabel: 'Transient local runtime failure during session open. Retrying with the same request id...',
+      pendingLabel: 'The previous session open request is still processing. Waiting for the same request id...',
+      maxAttempts: 20,
+      backoffMs: 1200,
+    });
+    if (!r.ok) throw new Error(d.error || 'Session open failed');
+    if (retried) addLog('warn', 'Recovered after one retry during session open.');
+
+    S.activeSession = {
+      status: 'open',
+      channel_id: d.channel_id,
+      contract_address: d.contract_address,
+      deposit_usdc: d.deposit_usdc,
+      deposit_atomic: d.deposit_atomic,
+      spent_usdc: 0,
+      cumulative_atomic: '0',
+      remaining_usdc: d.deposit_usdc,
+      calls_total: 0,
+      remaining_calls: d.expected_calls,
+      approve_tx_hash: d.approve_tx_hash || null,
+      open_tx_hash: d.open_tx_hash,
+      close_tx_hash: null,
+      refund_tx_hash: null,
+      expires_at: d.expires_at,
+    };
+    S.lastProof = {
+      mode: 'session',
+      at: new Date().toISOString(),
+      api_id: '',
+      api_name: '',
+      amount: 0,
+      session_channel_id: d.channel_id,
+      session_contract: d.contract_address,
+      session_open_tx_hash: d.open_tx_hash,
+      session_close_tx_hash: null,
+      cumulative_atomic: '0',
+      cumulative_usdc: 0,
+      session_calls_total: 0,
+      session_remaining_usdc: d.deposit_usdc,
+      session_refund_usdc: undefined,
+      session_paid_to_platform_usdc: undefined,
+      session_status: 'open',
+      response: null,
+      note: 'Session opened onchain. Repeated signed calls stay offchain until close.',
+    };
+    S.balance = Math.max(0, +(S.balance - Number(d.deposit_usdc || 0)).toFixed(3));
+    saveSessionState();
+    recordActivity({
+      kind: 'session_open',
+      status: 'open',
+      channel_id: d.channel_id,
+      deposit_usdc: Number(d.deposit_usdc || 0),
+      expected_calls: Number(d.expected_calls || 0),
+      open_tx_hash: d.open_tx_hash,
+      open_explorer: d.explorer?.open_tx || null,
+    });
+    renderWallet();
+    renderTxTable('play-txs');
+    renderPlaygroundMode();
+    syncBalance();
+    refreshBalance(false);
+    if (S.page === 'proof') renderProof();
+    addLog('pay', 'Session opened: ' + shortH(d.channel_id));
+    toast('Session opened onchain');
+  } catch (e) {
+    const message = /fetch failed|failed to fetch/i.test(e?.message || '')
+      ? 'Local API runtime is not responding. Restart the dev server and try again.'
+      : (e.message || 'Session open failed');
+    addLog('err', message);
+    toast(message, 'err');
+  } finally {
+    if (isSessionOpening()) S.sessionAction = null;
+    renderWallet();
+    renderPlaygroundMode();
+  }
+}
+
+async function closeSession() {
+  if (!hasOpenSession()) {
+    toast('No open session to close', 'warn');
+    return;
+  }
+  if (isSessionBusy()) {
+    toast('Session request already in progress', 'warn');
+    return;
+  }
+
+  S.sessionAction = 'closing';
+  renderWallet();
+  renderPlaygroundMode();
+  addLog('info', 'Closing session onchain...');
+  try {
+    const requestKey = makeIdempotencyKey('session-close');
+    const { response: r, json: d, retried } = await fetchJsonWithIdempotencyRetry('/api/session-close', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + S.identityKey,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': requestKey,
+      },
+      body: JSON.stringify({ channel_id: S.activeSession.channel_id }),
+    }, {
+      retryLabel: 'Transient local runtime failure during session close. Retrying with the same request id...',
+      pendingLabel: 'The previous session close request is still processing. Waiting for the same request id...',
+      maxAttempts: 20,
+      backoffMs: 1200,
+    });
+    if (!r.ok) throw new Error(d.error || 'Session close failed');
+    if (retried) addLog('warn', 'Recovered after one retry during session close.');
+
+    S.activeSession = {
+      ...(S.activeSession || {}),
+      status: 'closed',
+      spent_usdc: Number(d.cumulative_spent_usdc || 0),
+      remaining_usdc: 0,
+      calls_total: Number(d.calls_total || 0),
+      close_tx_hash: d.close_tx_hash,
+      paid_to_platform_usdc: d.paid_to_platform_usdc,
+      refunded_to_agent_usdc: d.refunded_to_agent_usdc,
+      closed_at: new Date().toISOString(),
+    };
+    S.balance = +(S.balance + Number(d.refunded_to_agent_usdc || 0)).toFixed(3);
+
+    if (S.lastProof && S.lastProof.mode === 'session' && S.lastProof.session_channel_id === d.channel_id) {
+      S.lastProof.session_close_tx_hash = d.close_tx_hash;
+      S.lastProof.session_refund_usdc = d.refunded_to_agent_usdc;
+      S.lastProof.session_paid_to_platform_usdc = d.paid_to_platform_usdc;
+      S.lastProof.session_status = 'closed';
+      S.lastProof.session_calls_total = d.calls_total;
+      S.lastProof.session_remaining_usdc = 0;
+      S.lastProof.cumulative_usdc = d.cumulative_spent_usdc;
+    }
+
+    saveSessionState();
+    recordActivity({
+      kind: 'session_close',
+      status: 'closed',
+      channel_id: d.channel_id,
+      spent_usdc: Number(d.cumulative_spent_usdc || 0),
+      refund_usdc: Number(d.refunded_to_agent_usdc || 0),
+      calls_total: Number(d.calls_total || 0),
+      close_tx_hash: d.close_tx_hash,
+      close_explorer: d.explorer || null,
+    });
+    renderWallet();
+    renderTxTable('play-txs');
+    renderPlaygroundMode();
+    syncBalance();
+    refreshBalance(false);
+    if (S.page === 'proof') renderProof();
+    addLog('pay', 'Session closed onchain: ' + shortH(d.close_tx_hash));
+    toast('Session closed and refunded');
+  } catch (e) {
+    addLog('err', e.message);
+    toast(e.message || 'Session close failed', 'err');
+  } finally {
+    if (isSessionClosing()) S.sessionAction = null;
+    renderWallet();
+    renderPlaygroundMode();
+  }
 }
 
 // ── WEBHOOKS ────────────────────────────────
@@ -1436,7 +2932,7 @@ async function deleteWebhook(id) {
 // ── MY APIs ─────────────────────────────────
 function renderMyApis() {
   if (!S.myApis.length) {
-    $('myapis-list').innerHTML = '<div class="empty"><div class="empty-icon">&#43;</div><div class="empty-title">No APIs registered yet</div><div class="empty-desc">Deploy your API. Agents pay $0.001 USDC per call, settled onchain on Arc.</div><button class="btn btn-primary mt12" onclick="openRegisterModal()">Register API</button></div>';
+    $('myapis-list').innerHTML = '<div class="empty"><div class="empty-icon">&#43;</div><div class="empty-title">No APIs registered yet</div><div class="empty-desc">Deploy your API. Agents pay $0.001 USDC per call through ArcPort.</div><button class="btn btn-primary mt12" onclick="openRegisterModal()">Register API</button></div>';
     return;
   }
   $('myapis-list').innerHTML = S.myApis.map(api => `
@@ -1538,11 +3034,10 @@ async function triggerWorker() {
 // ── INIT ─────────────────────────────────────
 renderMarket();
 renderWallet();
-S.walletType     = localStorage.getItem('ap_wt') || 'eoa';
-S.circleWalletId = localStorage.getItem('ap_cw') || '';
 const initSel = $('play-api');
 if (initSel) { initSel.innerHTML = S.apis.map(a => `<option value="${a.id}">${a.name}</option>`).join(''); onApiChange(); }
 if (S.key && $('play-key')) $('play-key').value = S.key;
+if (S.key) refreshBalance(false);
 </script>
 </body>
 </html>

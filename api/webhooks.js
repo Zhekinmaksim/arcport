@@ -1,6 +1,8 @@
 // api/webhooks.js
 // ARC Webhook API — subscribe to USDC transactions on any ARC address
 
+import { resolveWalletByToken } from './_wallet-identity.js';
+
 const sbH = () => ({ 'Content-Type': 'application/json', 'apikey': process.env.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}` });
 const sbGet = async (table, filter) => fetch(`${process.env.SUPABASE_URL}/rest/v1/${table}?${filter}&select=*`, { headers: sbH() }).then(r => r.json());
 const sbPost = async (table, body) => fetch(`${process.env.SUPABASE_URL}/rest/v1/${table}`, { method: 'POST', headers: { ...sbH(), 'Prefer': 'return=representation' }, body: JSON.stringify(body) }).then(r => r.json());
@@ -15,11 +17,13 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const agentKey = (req.headers.authorization || '').replace('Bearer ', '').trim();
-  if (!agentKey || !agentKey.startsWith('apk_')) return res.status(401).json({ error: 'Missing agent key' });
+  const authToken = (req.headers.authorization || '').replace('Bearer ', '').trim();
+  if (!authToken) return res.status(401).json({ error: 'Missing wallet identity key' });
 
-  const wallets = await sbGet('agent_wallets', `agent_key=eq.${encodeURIComponent(agentKey)}`);
-  if (!wallets[0]) return res.status(401).json({ error: 'Invalid agent key' });
+  const wallet = await resolveWalletByToken(authToken, sbGet);
+  if (!wallet) return res.status(401).json({ error: 'Invalid wallet identity key' });
+
+  const agentKey = wallet.agent_key || authToken;
 
   if (req.method === 'GET') {
     const subs = await sbGet('webhook_subscriptions', `agent_key=eq.${encodeURIComponent(agentKey)}&order=created_at.desc`);
@@ -36,7 +40,7 @@ export default async function handler(req, res) {
     if (bad.length) return res.status(400).json({ error: `Invalid events: ${bad.join(', ')}. Valid: ${validEvents.join(', ')}` });
 
     const existing = await sbGet('webhook_subscriptions', `agent_key=eq.${encodeURIComponent(agentKey)}&active=eq.true`);
-    if (existing.length >= 10) return res.status(429).json({ error: 'Max 10 active subscriptions per agent key' });
+    if (existing.length >= 10) return res.status(429).json({ error: 'Max 10 active subscriptions per wallet identity' });
 
     const rows = await sbPost('webhook_subscriptions', { agent_key: agentKey, arc_address: arc_address.toLowerCase(), url, events, secret: genSecret(), active: true, deliveries_total: 0, deliveries_failed: 0 });
     return res.status(201).json({ success: true, subscription: rows[0] });

@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "deploy:channel": "node contracts/deploy.mjs",
+    "proof:session": "node scripts/session-proof-runner.mjs"
+  },
   "dependencies": {
     "ethers": "^6.13.0"
   },

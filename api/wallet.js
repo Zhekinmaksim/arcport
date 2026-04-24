@@ -1,27 +1,27 @@
 // api/wallet.js — ArcPort wallet management
-// GET  /api/wallet (Authorization: Bearer apk_...)  — USDC balance
-// POST /api/wallet { action: "create" }              — create EOA wallet
-// POST /api/wallet { action: "create_circle" }       — create Circle Dev-Controlled wallet
+// GET  /api/wallet (Authorization: Bearer awi_... | apk_...)  — wallet + USDC balance
+// POST /api/wallet { action: "create" }                       — create legacy-compatible EOA wallet
+// POST /api/wallet { action: "create_circle" }                — create V2 Circle wallet identity
+
+import {
+  buildWalletRecord,
+  genToken,
+  legacyWalletFields,
+  publicWalletResponse,
+  resolveWalletByToken,
+} from './_wallet-identity.js';
+import { createDeveloperWallet } from './_circle.js';
 
 const ARC_RPC      = 'https://rpc.testnet.arc.network';
 const USDC_ADDRESS = '0x3600000000000000000000000000000000000000';
 const ARC_CHAIN_ID = 5042002;
-const CIRCLE_API   = 'https://api.circle.com/v1/w3s';
-
 const sbH = () => ({
   'Content-Type': 'application/json',
   'apikey':        process.env.SUPABASE_ANON_KEY,
   'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
 });
-
-const circleH = () => ({
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${process.env.CIRCLE_API_KEY}`,
-});
-
-const genKey = () => 'apk_' + Array.from({ length: 32 }, () =>
-  'abcdefghijklmnopqrstuvwxyz0123456789'[Math.random() * 36 | 0]
-).join('');
+const sbGet = (table, filter) =>
+  fetch(`${process.env.SUPABASE_URL}/rest/v1/${table}?${filter}&select=*`, { headers: sbH() }).then(r => r.json());
 
 async function onchainBalance(address) {
   try {
@@ -37,51 +37,68 @@ async function onchainBalance(address) {
   } catch { return null; }
 }
 
-async function encryptEntitySecret(entitySecretHex) {
-  // Fetch Circle public key
-  const r = await fetch(`${CIRCLE_API}/config/entity/publicKey`, { headers: circleH() });
-  const d = await r.json();
-  const publicKey = d.data?.publicKey;
-  if (!publicKey) throw new Error('No public key: ' + JSON.stringify(d));
-
-  // RSA-OAEP encrypt — dynamic import of crypto
-  const { publicEncrypt, constants } = await import('node:crypto');
-  const encrypted = publicEncrypt(
-    { key: publicKey, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' },
-    Buffer.from(entitySecretHex, 'hex')
-  );
-  return encrypted.toString('base64');
+async function createCircleWallet() {
+  const walletSetId  = process.env.CIRCLE_WALLET_SET_ID;
+  if (!walletSetId) throw new Error('CIRCLE_WALLET_SET_ID required');
+  const wallet = await createDeveloperWallet({ walletSetId });
+  return { walletId: wallet.id, address: wallet.address };
 }
 
-async function createCircleWallet() {
-  const apiKey       = process.env.CIRCLE_API_KEY;
-  const entitySecret = process.env.CIRCLE_ENTITY_SECRET;
-  const walletSetId  = process.env.CIRCLE_WALLET_SET_ID;
-  if (!apiKey || !entitySecret) throw new Error('CIRCLE_API_KEY and CIRCLE_ENTITY_SECRET required');
-
-  const { randomUUID } = await import('node:crypto');
-
-  // Encrypt entity secret fresh each time
-  const ciphertext = await encryptEntitySecret(entitySecret);
-
-  // Create wallet
-  const wResp = await fetch(`${CIRCLE_API}/developer/wallets`, {
+async function insertWalletRecord(record) {
+  const url = `${process.env.SUPABASE_URL}/rest/v1/agent_wallets`;
+  const full = await fetch(url, {
     method: 'POST',
-    headers: circleH(),
-    body: JSON.stringify({
-      idempotencyKey:         randomUUID(),
-      accountType:            'EOA',
-      blockchains:            ['ARC-TESTNET'],
-      count:                  1,
-      walletSetId,
-      entitySecretCiphertext: ciphertext,
-    }),
-  });
-  const wData = await wResp.json();
-  const wallet = wData.data?.wallets?.[0];
-  if (!wallet) throw new Error('Circle wallet creation failed: ' + JSON.stringify(wData));
+    headers: { ...sbH(), 'Prefer': 'return=minimal' },
+    body: JSON.stringify(record),
+  }).catch(e => { throw new Error('DB error: ' + e.message); });
 
-  return { walletId: wallet.id, address: wallet.address };
+  if (full.ok) return { storage_mode: 'v2', schema_warning: null };
+
+  const fullText = await full.text();
+  const looksLikeLegacySchema =
+    full.status === 400 &&
+    /column|schema cache|identity_key|wallet_id|gateway_enabled|default_asset|default_network|metadata/i.test(fullText);
+
+  if (!looksLikeLegacySchema) {
+    throw new Error('Failed to save wallet: ' + fullText);
+  }
+
+  const fallback = await fetch(url, {
+    method: 'POST',
+    headers: { ...sbH(), 'Prefer': 'return=minimal' },
+    body: JSON.stringify(legacyWalletFields(record)),
+  }).catch(e => { throw new Error('DB error: ' + e.message); });
+
+  if (!fallback.ok) {
+    throw new Error('Failed to save wallet: ' + await fallback.text());
+  }
+
+  return {
+    storage_mode: 'legacy-schema',
+    schema_warning: 'Supabase schema is still on V1. Run the updated schema.sql to persist wallet identities and V2 metadata.',
+  };
+}
+
+function walletResponsePayload(wallet, extra = {}) {
+  const base = publicWalletResponse(wallet);
+  return {
+    success: true,
+    ...base,
+    identity: {
+      wallet_id: base.wallet_id,
+      identity_key: base.identity_key,
+      legacy_agent_key: base.agent_key,
+      arc_address: base.arc_address,
+      wallet_type: base.wallet_type,
+      custody_provider: base.custody_provider,
+      gateway_enabled: base.gateway_enabled,
+    },
+    payment_methods: {
+      nanopayment: base.wallet_type === 'circle',
+      legacy: true,
+    },
+    ...extra,
+  };
 }
 
 export default async function handler(req, res) {
@@ -92,32 +109,22 @@ export default async function handler(req, res) {
 
   // ── GET: balance ────────────────────────────────────────
   if (req.method === 'GET') {
-    const agentKey = (req.headers.authorization || '').replace('Bearer ', '').trim();
-    if (!agentKey) return res.status(401).json({ error: 'Missing agent key' });
+    const authToken = (req.headers.authorization || '').replace('Bearer ', '').trim();
+    if (!authToken) return res.status(401).json({ error: 'Missing wallet identity key' });
 
-    const r = await fetch(
-      `${process.env.SUPABASE_URL}/rest/v1/agent_wallets?agent_key=eq.${encodeURIComponent(agentKey)}&select=*`,
-      { headers: sbH() }
-    ).catch(e => { throw new Error('DB error: ' + e.message); });
+    const wallet = await resolveWalletByToken(authToken, sbGet);
+    if (!wallet) return res.status(404).json({ error: 'Wallet not found' });
 
-    const rows = await r.json();
-    if (!rows[0]) return res.status(404).json({ error: 'Wallet not found' });
+    const balance = wallet.arc_address ? await onchainBalance(wallet.arc_address) : null;
 
-    const w       = rows[0];
-    const balance = w.arc_address ? await onchainBalance(w.arc_address) : null;
-
-    return res.status(200).json({
-      agent_key:        agentKey,
-      arc_address:      w.arc_address,
-      circle_wallet_id: w.circle_wallet_id || null,
-      wallet_type:      w.wallet_type || 'eoa',
-      balance_usdc:     balance ?? w.balance,
+    return res.status(200).json(walletResponsePayload(wallet, {
+      balance_usdc:     balance ?? wallet.balance,
       balance_source:   balance !== null ? 'onchain' : 'cached',
       network:          'ARC Testnet',
       chain_id:         ARC_CHAIN_ID,
-      explorer:         `https://testnet.arcscan.app/address/${w.arc_address}`,
+      explorer:         `https://testnet.arcscan.app/address/${wallet.arc_address}`,
       faucet:           'https://faucet.circle.com',
-    });
+    }));
   }
 
   // ── POST: create wallet ─────────────────────────────────
@@ -127,81 +134,58 @@ export default async function handler(req, res) {
     // EOA wallet
     if (!action || action === 'create') {
       const { ethers } = await import('ethers');
-      const wallet   = ethers.Wallet.createRandom();
-      const agentKey = genKey();
+      const wallet = ethers.Wallet.createRandom();
+      const record = buildWalletRecord({
+        walletId: genToken('awlt_'),
+        identityKey: genToken('awi_'),
+        agentKey: genToken('apk_'),
+        arcAddress: wallet.address,
+        walletType: 'eoa',
+      });
 
-      const insert = await fetch(`${process.env.SUPABASE_URL}/rest/v1/agent_wallets`, {
-        method: 'POST',
-        headers: { ...sbH(), 'Prefer': 'return=minimal' },
-        body: JSON.stringify({ agent_key: agentKey, arc_address: wallet.address, balance: 0, wallet_type: 'eoa' }),
-      }).catch(e => { throw new Error('DB error: ' + e.message); });
+      const storage = await insertWalletRecord(record);
 
-      if (!insert.ok) return res.status(500).json({ error: 'Failed to save wallet: ' + await insert.text() });
-
-      return res.status(201).json({
-        success:     true,
-        agent_key:   agentKey,
-        arc_address: wallet.address,
-        wallet_type: 'eoa',
-        network:     'ARC Testnet',
-        chain_id:    ARC_CHAIN_ID,
-        explorer:    `https://testnet.arcscan.app/address/${wallet.address}`,
+      return res.status(201).json(walletResponsePayload(record, {
+        storage_mode: storage.storage_mode,
+        schema_warning: storage.schema_warning,
+        network:       'ARC Testnet',
+        chain_id:      ARC_CHAIN_ID,
+        explorer:      `https://testnet.arcscan.app/address/${wallet.address}`,
         next_steps: [
           '1. Go to https://faucet.circle.com — select ARC Testnet',
           '2. Paste your arc_address — receive 10 USDC free',
-          '3. Use agent_key as Bearer token in API calls',
+          '3. Use identity_key for V2 clients or agent_key for the current Playground',
         ],
-      });
+      }));
     }
 
     // Circle Dev-Controlled wallet
     if (action === 'create_circle') {
       try {
-        const cWallet  = await createCircleWallet();
-        const agentKey = genKey();
+        const cWallet = await createCircleWallet();
+        const record = buildWalletRecord({
+          walletId: genToken('awlt_'),
+          identityKey: genToken('awi_'),
+          agentKey: genToken('apk_'),
+          arcAddress: cWallet.address,
+          circleWalletId: cWallet.walletId,
+          walletType: 'circle',
+        });
 
-        // Save to Supabase with retry
-        const saveToDb = async (retries = 3) => {
-          for (let i = 0; i < retries; i++) {
-            try {
-              const r = await fetch(`${process.env.SUPABASE_URL}/rest/v1/agent_wallets`, {
-                method: 'POST',
-                headers: { ...sbH(), 'Prefer': 'return=minimal' },
-                body: JSON.stringify({
-                  agent_key:        agentKey,
-                  arc_address:      cWallet.address,
-                  circle_wallet_id: cWallet.walletId,
-                  balance:          0,
-                  wallet_type:      'circle',
-                }),
-              });
-              if (r.ok) { console.log('[ArcPort] Supabase saved OK'); return; }
-              console.log('[ArcPort] Supabase attempt', i+1, 'status:', r.status);
-            } catch(e) {
-              console.log('[ArcPort] Supabase attempt', i+1, 'failed:', e.message);
-              if (i < retries - 1) await new Promise(r => setTimeout(r, 500));
-            }
-          }
-          console.error('[ArcPort] Supabase save failed after retries');
-        };
-        saveToDb();
+        const storage = await insertWalletRecord(record);
 
-        return res.status(201).json({
-          success:          true,
-          agent_key:        agentKey,
-          arc_address:      cWallet.address,
-          circle_wallet_id: cWallet.walletId,
-          wallet_type:      'circle',
-          network:          'ARC Testnet',
-          chain_id:         ARC_CHAIN_ID,
-          explorer:         `https://testnet.arcscan.app/address/${cWallet.address}`,
-          payment_methods: { nanopayment: true, direct: true },
+        return res.status(201).json(walletResponsePayload(record, {
+          storage_mode: storage.storage_mode,
+          schema_warning: storage.schema_warning,
+          network:       'ARC Testnet',
+          chain_id:      ARC_CHAIN_ID,
+          explorer:      `https://testnet.arcscan.app/address/${cWallet.address}`,
           next_steps: [
             '1. Go to https://faucet.circle.com — select ARC Testnet',
             '2. Paste your arc_address — receive 10 USDC free',
-            '3. Use agent_key in Playground',
+            '3. Use identity_key for V2 clients. The current Playground can still use agent_key.',
           ],
-        });
+        }));
       } catch(e) {
         return res.status(500).json({ error: 'Circle wallet creation failed: ' + e.message });
       }

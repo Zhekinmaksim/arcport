@@ -1,0 +1,705 @@
+{
+  "started_at": "2026-04-21T10:43:27.974Z",
+  "ended_at": "2026-04-21T10:51:49.823Z",
+  "base_url": "http://127.0.0.1:3000",
+  "wallet_identity_key_suffix": "fb8d93f34ed1",
+  "api_id": "weather-1",
+  "api_params": {
+    "city": "Berlin"
+  },
+  "cycles_requested": 17,
+  "calls_per_cycle": 1,
+  "deposit_usdc_per_cycle": 0.001,
+  "total_calls": 17,
+  "total_onchain_transactions": 51,
+  "transaction_breakdown": {
+    "approve": 17,
+    "open": 17,
+    "close": 17
+  },
+  "meets_50_onchain_requirement": true,
+  "transactions": [
+    {
+      "type": "approve",
+      "hash": "0xcacae281b7706f742bec81c99dc8241200efd8e7f70c93617faf7f8227b261bb",
+      "cycle": 1,
+      "explorer": "https://testnet.arcscan.app/tx/0xcacae281b7706f742bec81c99dc8241200efd8e7f70c93617faf7f8227b261bb"
+    },
+    {
+      "type": "open",
+      "hash": "0x903df55846219cf2130f6384526bee4193efea721cd6ea982e62634a6b3079ba",
+      "cycle": 1,
+      "explorer": "https://testnet.arcscan.app/tx/0x903df55846219cf2130f6384526bee4193efea721cd6ea982e62634a6b3079ba"
+    },
+    {
+      "type": "close",
+      "hash": "0x7509816fe1e0d42129010cb7fe803e490592ea768d93f5a86b7e8988272f2771",
+      "cycle": 1,
+      "explorer": "https://testnet.arcscan.app/tx/0x7509816fe1e0d42129010cb7fe803e490592ea768d93f5a86b7e8988272f2771"
+    },
+    {
+      "type": "approve",
+      "hash": "0x32f78510140ea4fd4dd15fa5f57decae2835e7b2e9a02bad87f4d80553a1d7b2",
+      "cycle": 2,
+      "explorer": "https://testnet.arcscan.app/tx/0x32f78510140ea4fd4dd15fa5f57decae2835e7b2e9a02bad87f4d80553a1d7b2"
+    },
+    {
+      "type": "open",
+      "hash": "0x0eb56d6baa905eff163ace44d9315fe45e87219b847a58e8d002681932d5b5dc",
+      "cycle": 2,
+      "explorer": "https://testnet.arcscan.app/tx/0x0eb56d6baa905eff163ace44d9315fe45e87219b847a58e8d002681932d5b5dc"
+    },
+    {
+      "type": "close",
+      "hash": "0x0844aa68064b4a4a0430e155624d54f34cb4c9e250d96471991b3e1d0e6e9183",
+      "cycle": 2,
+      "explorer": "https://testnet.arcscan.app/tx/0x0844aa68064b4a4a0430e155624d54f34cb4c9e250d96471991b3e1d0e6e9183"
+    },
+    {
+      "type": "approve",
+      "hash": "0x0f32c5471580fd411e7b64360dee5f30a7cc143408ef4cd849f274681e8541f1",
+      "cycle": 3,
+      "explorer": "https://testnet.arcscan.app/tx/0x0f32c5471580fd411e7b64360dee5f30a7cc143408ef4cd849f274681e8541f1"
+    },
+    {
+      "type": "open",
+      "hash": "0x49098342b06e1cb076f971fbe71fa5b6d3cdac174c854fee8cac171b19c31dce",
+      "cycle": 3,
+      "explorer": "https://testnet.arcscan.app/tx/0x49098342b06e1cb076f971fbe71fa5b6d3cdac174c854fee8cac171b19c31dce"
+    },
+    {
+      "type": "close",
+      "hash": "0x373c0c76431bb21a3db9300bba3e5f133c8cd5546fcbaa7748652f266a1b35b2",
+      "cycle": 3,
+      "explorer": "https://testnet.arcscan.app/tx/0x373c0c76431bb21a3db9300bba3e5f133c8cd5546fcbaa7748652f266a1b35b2"
+    },
+    {
+      "type": "approve",
+      "hash": "0x7b337876b17f04df9f351f5a5e137bb6a3f68f0c69e3ea8cbde25f9f99097424",
+      "cycle": 4,
+      "explorer": "https://testnet.arcscan.app/tx/0x7b337876b17f04df9f351f5a5e137bb6a3f68f0c69e3ea8cbde25f9f99097424"
+    },
+    {
+      "type": "open",
+      "hash": "0x84a8a2686e5ddab33737ca74b7f68d1b48d0f0b0cfaebbe692637aa283b51db4",
+      "cycle": 4,
+      "explorer": "https://testnet.arcscan.app/tx/0x84a8a2686e5ddab33737ca74b7f68d1b48d0f0b0cfaebbe692637aa283b51db4"
+    },
+    {
+      "type": "close",
+      "hash": "0x3c5482c5ded4011721adcceb7fe8589dfea0efb4d15d27dacf3a767c1a6ff364",
+      "cycle": 4,
+      "explorer": "https://testnet.arcscan.app/tx/0x3c5482c5ded4011721adcceb7fe8589dfea0efb4d15d27dacf3a767c1a6ff364"
+    },
+    {
+      "type": "approve",
+      "hash": "0xb5b2cdff15519d1ef792871efcb05924b6641f55a0e8a43b9205bdb31863e19b",
+      "cycle": 5,
+      "explorer": "https://testnet.arcscan.app/tx/0xb5b2cdff15519d1ef792871efcb05924b6641f55a0e8a43b9205bdb31863e19b"
+    },
+    {
+      "type": "open",
+      "hash": "0x78548caf40b8a8b94199737459ae301b8aa0fb50d0f85aace1f583dc27b44a15",
+      "cycle": 5,
+      "explorer": "https://testnet.arcscan.app/tx/0x78548caf40b8a8b94199737459ae301b8aa0fb50d0f85aace1f583dc27b44a15"
+    },
+    {
+      "type": "close",
+      "hash": "0x8da722fbd17d37af328d6938bba356f22ec1996570c5adedbe384aafb4ebb712",
+      "cycle": 5,
+      "explorer": "https://testnet.arcscan.app/tx/0x8da722fbd17d37af328d6938bba356f22ec1996570c5adedbe384aafb4ebb712"
+    },
+    {
+      "type": "approve",
+      "hash": "0x58fc99d5467c74e5d0d95f33a9e73e2f62503600688efd9b524bb96d53b622bd",
+      "cycle": 6,
+      "explorer": "https://testnet.arcscan.app/tx/0x58fc99d5467c74e5d0d95f33a9e73e2f62503600688efd9b524bb96d53b622bd"
+    },
+    {
+      "type": "open",
+      "hash": "0x10a365392d87e2b542a8f553c73894f8625bc08c6e4e84cd1791b96b8de673bd",
+      "cycle": 6,
+      "explorer": "https://testnet.arcscan.app/tx/0x10a365392d87e2b542a8f553c73894f8625bc08c6e4e84cd1791b96b8de673bd"
+    },
+    {
+      "type": "close",
+      "hash": "0xe33b4dc9bd105063a08646713ba964b102829474df68c8a917bcb5bb116331f4",
+      "cycle": 6,
+      "explorer": "https://testnet.arcscan.app/tx/0xe33b4dc9bd105063a08646713ba964b102829474df68c8a917bcb5bb116331f4"
+    },
+    {
+      "type": "approve",
+      "hash": "0x59746f420a707a1fb96bfe0a86532929b1e99397da4d3b5e6043c3648c4567df",
+      "cycle": 7,
+      "explorer": "https://testnet.arcscan.app/tx/0x59746f420a707a1fb96bfe0a86532929b1e99397da4d3b5e6043c3648c4567df"
+    },
+    {
+      "type": "open",
+      "hash": "0x0d5e8634a925e585971bdd1d5d77f46473ca3d5a5c70408bb0236dfd793be249",
+      "cycle": 7,
+      "explorer": "https://testnet.arcscan.app/tx/0x0d5e8634a925e585971bdd1d5d77f46473ca3d5a5c70408bb0236dfd793be249"
+    },
+    {
+      "type": "close",
+      "hash": "0xb613575ea7272cef2c1b5df5fb357aa4dbbbcd82797639d6786a65f880a73b71",
+      "cycle": 7,
+      "explorer": "https://testnet.arcscan.app/tx/0xb613575ea7272cef2c1b5df5fb357aa4dbbbcd82797639d6786a65f880a73b71"
+    },
+    {
+      "type": "approve",
+      "hash": "0xeeafccb384a448328ee864afb842c5ac88ecc908d6c92d8938555408c3764bab",
+      "cycle": 8,
+      "explorer": "https://testnet.arcscan.app/tx/0xeeafccb384a448328ee864afb842c5ac88ecc908d6c92d8938555408c3764bab"
+    },
+    {
+      "type": "open",
+      "hash": "0xb6a0235747487b21a215acedb1b9ecca9cbb6d3dbdcb5d96add2f6bb111b972c",
+      "cycle": 8,
+      "explorer": "https://testnet.arcscan.app/tx/0xb6a0235747487b21a215acedb1b9ecca9cbb6d3dbdcb5d96add2f6bb111b972c"
+    },
+    {
+      "type": "close",
+      "hash": "0x4168f325df0c3b7777f97b9f83bdaa688650b099df6749b7a2c96c624ad8e68e",
+      "cycle": 8,
+      "explorer": "https://testnet.arcscan.app/tx/0x4168f325df0c3b7777f97b9f83bdaa688650b099df6749b7a2c96c624ad8e68e"
+    },
+    {
+      "type": "approve",
+      "hash": "0xa3b2905d669357556bc4fcb30b6fa0dff7384a7c514f0a46c524bc5e5d9e444e",
+      "cycle": 9,
+      "explorer": "https://testnet.arcscan.app/tx/0xa3b2905d669357556bc4fcb30b6fa0dff7384a7c514f0a46c524bc5e5d9e444e"
+    },
+    {
+      "type": "open",
+      "hash": "0x3ccacac66484544fc905643cb6e5511681e9d67a8412fc39fb1ae13241b4291f",
+      "cycle": 9,
+      "explorer": "https://testnet.arcscan.app/tx/0x3ccacac66484544fc905643cb6e5511681e9d67a8412fc39fb1ae13241b4291f"
+    },
+    {
+      "type": "close",
+      "hash": "0x9ab3c51158e47919493c8ea8ed2ec8d07a09aa0823ce68de273dd0481e359c83",
+      "cycle": 9,
+      "explorer": "https://testnet.arcscan.app/tx/0x9ab3c51158e47919493c8ea8ed2ec8d07a09aa0823ce68de273dd0481e359c83"
+    },
+    {
+      "type": "approve",
+      "hash": "0x496f9d40dc5badc102b74fb51f1ac09a5b633cafeb279d450ab534e7351d9b73",
+      "cycle": 10,
+      "explorer": "https://testnet.arcscan.app/tx/0x496f9d40dc5badc102b74fb51f1ac09a5b633cafeb279d450ab534e7351d9b73"
+    },
+    {
+      "type": "open",
+      "hash": "0x5745e86f20a00eb78d0d601da28606e4bfd79f5c1036c3beab449d0aa520c100",
+      "cycle": 10,
+      "explorer": "https://testnet.arcscan.app/tx/0x5745e86f20a00eb78d0d601da28606e4bfd79f5c1036c3beab449d0aa520c100"
+    },
+    {
+      "type": "close",
+      "hash": "0xbe8f9e720fe0ff435ce74686babbcbddb071f60cdeded08c3377e4d719b0f05f",
+      "cycle": 10,
+      "explorer": "https://testnet.arcscan.app/tx/0xbe8f9e720fe0ff435ce74686babbcbddb071f60cdeded08c3377e4d719b0f05f"
+    },
+    {
+      "type": "approve",
+      "hash": "0x12252825f0c03594d60c839c708b7f2dd2b71da2885c1611f69842d770010f03",
+      "cycle": 11,
+      "explorer": "https://testnet.arcscan.app/tx/0x12252825f0c03594d60c839c708b7f2dd2b71da2885c1611f69842d770010f03"
+    },
+    {
+      "type": "open",
+      "hash": "0xffcd815da7af5c1f8da37094d74bf21649f7d3522206990729305f221e131627",
+      "cycle": 11,
+      "explorer": "https://testnet.arcscan.app/tx/0xffcd815da7af5c1f8da37094d74bf21649f7d3522206990729305f221e131627"
+    },
+    {
+      "type": "close",
+      "hash": "0x503a6ad8e0495aa28d6b99a0b0008feaab9fb6ca668f416c4db28627f1390d2a",
+      "cycle": 11,
+      "explorer": "https://testnet.arcscan.app/tx/0x503a6ad8e0495aa28d6b99a0b0008feaab9fb6ca668f416c4db28627f1390d2a"
+    },
+    {
+      "type": "approve",
+      "hash": "0x531ef8856da0d7e17b07717ec28c5927aa2d60ec107a86c35e61096813f75d90",
+      "cycle": 12,
+      "explorer": "https://testnet.arcscan.app/tx/0x531ef8856da0d7e17b07717ec28c5927aa2d60ec107a86c35e61096813f75d90"
+    },
+    {
+      "type": "open",
+      "hash": "0x6d09d702c11e4bb7db8a214f7659a093ebf77576fc5a50ad35e196f4ec829965",
+      "cycle": 12,
+      "explorer": "https://testnet.arcscan.app/tx/0x6d09d702c11e4bb7db8a214f7659a093ebf77576fc5a50ad35e196f4ec829965"
+    },
+    {
+      "type": "close",
+      "hash": "0x3c427acdfaeecd86723c2bd5e903f383401c194c6f43b81a1d0a98af28be4970",
+      "cycle": 12,
+      "explorer": "https://testnet.arcscan.app/tx/0x3c427acdfaeecd86723c2bd5e903f383401c194c6f43b81a1d0a98af28be4970"
+    },
+    {
+      "type": "approve",
+      "hash": "0xba24bbba92cf99e22249d7c0482582ee94753de145fd95157ebeac35207b7298",
+      "cycle": 13,
+      "explorer": "https://testnet.arcscan.app/tx/0xba24bbba92cf99e22249d7c0482582ee94753de145fd95157ebeac35207b7298"
+    },
+    {
+      "type": "open",
+      "hash": "0x1004554ceb909292038c0abcaccc40a985c2d8bdd1609a8f07707a946dcb7fb8",
+      "cycle": 13,
+      "explorer": "https://testnet.arcscan.app/tx/0x1004554ceb909292038c0abcaccc40a985c2d8bdd1609a8f07707a946dcb7fb8"
+    },
+    {
+      "type": "close",
+      "hash": "0xfe401fb2e2acb170868411a18b86449847dd31d85d65842e58ca7fb6cd4ab188",
+      "cycle": 13,
+      "explorer": "https://testnet.arcscan.app/tx/0xfe401fb2e2acb170868411a18b86449847dd31d85d65842e58ca7fb6cd4ab188"
+    },
+    {
+      "type": "approve",
+      "hash": "0xacc75ed0ad83bce53b8521a0c9d5ba13905cb89bc448ee6eabdb499195f7c73c",
+      "cycle": 14,
+      "explorer": "https://testnet.arcscan.app/tx/0xacc75ed0ad83bce53b8521a0c9d5ba13905cb89bc448ee6eabdb499195f7c73c"
+    },
+    {
+      "type": "open",
+      "hash": "0x6e713e607b1aca2b7655e22f655511db88549573f24b1fc54a3b4106e86076f2",
+      "cycle": 14,
+      "explorer": "https://testnet.arcscan.app/tx/0x6e713e607b1aca2b7655e22f655511db88549573f24b1fc54a3b4106e86076f2"
+    },
+    {
+      "type": "close",
+      "hash": "0xee85153aac3756455c4c5d9935740087b818b14f3b8eb65f45badbddb895c62b",
+      "cycle": 14,
+      "explorer": "https://testnet.arcscan.app/tx/0xee85153aac3756455c4c5d9935740087b818b14f3b8eb65f45badbddb895c62b"
+    },
+    {
+      "type": "approve",
+      "hash": "0xa5d510ce0ad2320f05d3dcbe7b4ed166e524cbb2551a5e15c4e32f20b55da45c",
+      "cycle": 15,
+      "explorer": "https://testnet.arcscan.app/tx/0xa5d510ce0ad2320f05d3dcbe7b4ed166e524cbb2551a5e15c4e32f20b55da45c"
+    },
+    {
+      "type": "open",
+      "hash": "0x1d3c9bc2ee8440fbe591aa2456042d9b0e89b4247be4f2bde95881945a562e22",
+      "cycle": 15,
+      "explorer": "https://testnet.arcscan.app/tx/0x1d3c9bc2ee8440fbe591aa2456042d9b0e89b4247be4f2bde95881945a562e22"
+    },
+    {
+      "type": "close",
+      "hash": "0x09f2fe6942daa04346805f8f6651ca346bac18335c5f953efebed309d78e9661",
+      "cycle": 15,
+      "explorer": "https://testnet.arcscan.app/tx/0x09f2fe6942daa04346805f8f6651ca346bac18335c5f953efebed309d78e9661"
+    },
+    {
+      "type": "approve",
+      "hash": "0x5376ca1485988cda7574ddf3b35b62280283d49fca2123860c8b4c7fbd8b7677",
+      "cycle": 16,
+      "explorer": "https://testnet.arcscan.app/tx/0x5376ca1485988cda7574ddf3b35b62280283d49fca2123860c8b4c7fbd8b7677"
+    },
+    {
+      "type": "open",
+      "hash": "0xcada3446140f241834070b4fc73099d58fa5373dd20bbc9266539223232edd00",
+      "cycle": 16,
+      "explorer": "https://testnet.arcscan.app/tx/0xcada3446140f241834070b4fc73099d58fa5373dd20bbc9266539223232edd00"
+    },
+    {
+      "type": "close",
+      "hash": "0x5cca5bf5141ef86716290e81668f2b5a4a6c153ad8c5a14cca506d9a8e0d3725",
+      "cycle": 16,
+      "explorer": "https://testnet.arcscan.app/tx/0x5cca5bf5141ef86716290e81668f2b5a4a6c153ad8c5a14cca506d9a8e0d3725"
+    },
+    {
+      "type": "approve",
+      "hash": "0xd0aefc46db8bf31015fe344f1c89d1f76c28351912b4d853d5ece26b0277742c",
+      "cycle": 17,
+      "explorer": "https://testnet.arcscan.app/tx/0xd0aefc46db8bf31015fe344f1c89d1f76c28351912b4d853d5ece26b0277742c"
+    },
+    {
+      "type": "open",
+      "hash": "0xba9a446bbb30d839fd1b023496417e754d4bab13003c3f9e4526de92e34ddeb0",
+      "cycle": 17,
+      "explorer": "https://testnet.arcscan.app/tx/0xba9a446bbb30d839fd1b023496417e754d4bab13003c3f9e4526de92e34ddeb0"
+    },
+    {
+      "type": "close",
+      "hash": "0x93d1caa1a3ec85daf6296f8d77f57d56aaf9f4fbdacc0d2257f5f988daae115d",
+      "cycle": 17,
+      "explorer": "https://testnet.arcscan.app/tx/0x93d1caa1a3ec85daf6296f8d77f57d56aaf9f4fbdacc0d2257f5f988daae115d"
+    }
+  ],
+  "cycles": [
+    {
+      "index": 1,
+      "channel_id": "0xad0ebbbe27061513be391cd5e51e28a01c6d3035c0e380f504205c33c46a7466",
+      "approve_tx_hash": "0xcacae281b7706f742bec81c99dc8241200efd8e7f70c93617faf7f8227b261bb",
+      "open_tx_hash": "0x903df55846219cf2130f6384526bee4193efea721cd6ea982e62634a6b3079ba",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0xcacae281b7706f742bec81c99dc8241200efd8e7f70c93617faf7f8227b261bb",
+        "open_tx": "https://testnet.arcscan.app/tx/0x903df55846219cf2130f6384526bee4193efea721cd6ea982e62634a6b3079ba",
+        "close_tx": "https://testnet.arcscan.app/tx/0x7509816fe1e0d42129010cb7fe803e490592ea768d93f5a86b7e8988272f2771"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 873
+        }
+      ],
+      "close_tx_hash": "0x7509816fe1e0d42129010cb7fe803e490592ea768d93f5a86b7e8988272f2771",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 2,
+      "channel_id": "0x06b41db343f8d72e683acc87eb20843a2b2e743d22c14b5f05e4e0e89dd87d4c",
+      "approve_tx_hash": "0x32f78510140ea4fd4dd15fa5f57decae2835e7b2e9a02bad87f4d80553a1d7b2",
+      "open_tx_hash": "0x0eb56d6baa905eff163ace44d9315fe45e87219b847a58e8d002681932d5b5dc",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0x32f78510140ea4fd4dd15fa5f57decae2835e7b2e9a02bad87f4d80553a1d7b2",
+        "open_tx": "https://testnet.arcscan.app/tx/0x0eb56d6baa905eff163ace44d9315fe45e87219b847a58e8d002681932d5b5dc",
+        "close_tx": "https://testnet.arcscan.app/tx/0x0844aa68064b4a4a0430e155624d54f34cb4c9e250d96471991b3e1d0e6e9183"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 1230
+        }
+      ],
+      "close_tx_hash": "0x0844aa68064b4a4a0430e155624d54f34cb4c9e250d96471991b3e1d0e6e9183",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 3,
+      "channel_id": "0xc41d9bb8c171f6ce53db0e50eca4ba5e4a7198e0ac7b9f1bb2e70542ed7f02f9",
+      "approve_tx_hash": "0x0f32c5471580fd411e7b64360dee5f30a7cc143408ef4cd849f274681e8541f1",
+      "open_tx_hash": "0x49098342b06e1cb076f971fbe71fa5b6d3cdac174c854fee8cac171b19c31dce",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0x0f32c5471580fd411e7b64360dee5f30a7cc143408ef4cd849f274681e8541f1",
+        "open_tx": "https://testnet.arcscan.app/tx/0x49098342b06e1cb076f971fbe71fa5b6d3cdac174c854fee8cac171b19c31dce",
+        "close_tx": "https://testnet.arcscan.app/tx/0x373c0c76431bb21a3db9300bba3e5f133c8cd5546fcbaa7748652f266a1b35b2"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 683
+        }
+      ],
+      "close_tx_hash": "0x373c0c76431bb21a3db9300bba3e5f133c8cd5546fcbaa7748652f266a1b35b2",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 4,
+      "channel_id": "0x620badf217b1e913997f7f82b1229c5402b05a4d00c21f0a62bf66e434df7196",
+      "approve_tx_hash": "0x7b337876b17f04df9f351f5a5e137bb6a3f68f0c69e3ea8cbde25f9f99097424",
+      "open_tx_hash": "0x84a8a2686e5ddab33737ca74b7f68d1b48d0f0b0cfaebbe692637aa283b51db4",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0x7b337876b17f04df9f351f5a5e137bb6a3f68f0c69e3ea8cbde25f9f99097424",
+        "open_tx": "https://testnet.arcscan.app/tx/0x84a8a2686e5ddab33737ca74b7f68d1b48d0f0b0cfaebbe692637aa283b51db4",
+        "close_tx": "https://testnet.arcscan.app/tx/0x3c5482c5ded4011721adcceb7fe8589dfea0efb4d15d27dacf3a767c1a6ff364"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 1032
+        }
+      ],
+      "close_tx_hash": "0x3c5482c5ded4011721adcceb7fe8589dfea0efb4d15d27dacf3a767c1a6ff364",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 5,
+      "channel_id": "0xdac3f95c300b337c36d4687e52b62af72519ae67800ebcbc90443de8ee63f800",
+      "approve_tx_hash": "0xb5b2cdff15519d1ef792871efcb05924b6641f55a0e8a43b9205bdb31863e19b",
+      "open_tx_hash": "0x78548caf40b8a8b94199737459ae301b8aa0fb50d0f85aace1f583dc27b44a15",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0xb5b2cdff15519d1ef792871efcb05924b6641f55a0e8a43b9205bdb31863e19b",
+        "open_tx": "https://testnet.arcscan.app/tx/0x78548caf40b8a8b94199737459ae301b8aa0fb50d0f85aace1f583dc27b44a15",
+        "close_tx": "https://testnet.arcscan.app/tx/0x8da722fbd17d37af328d6938bba356f22ec1996570c5adedbe384aafb4ebb712"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 723
+        }
+      ],
+      "close_tx_hash": "0x8da722fbd17d37af328d6938bba356f22ec1996570c5adedbe384aafb4ebb712",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 6,
+      "channel_id": "0x98cd874b8bd9e469765096267d6f74fcdff02b68b896ca2a6a9fcdb32470fc33",
+      "approve_tx_hash": "0x58fc99d5467c74e5d0d95f33a9e73e2f62503600688efd9b524bb96d53b622bd",
+      "open_tx_hash": "0x10a365392d87e2b542a8f553c73894f8625bc08c6e4e84cd1791b96b8de673bd",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0x58fc99d5467c74e5d0d95f33a9e73e2f62503600688efd9b524bb96d53b622bd",
+        "open_tx": "https://testnet.arcscan.app/tx/0x10a365392d87e2b542a8f553c73894f8625bc08c6e4e84cd1791b96b8de673bd",
+        "close_tx": "https://testnet.arcscan.app/tx/0xe33b4dc9bd105063a08646713ba964b102829474df68c8a917bcb5bb116331f4"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 718
+        }
+      ],
+      "close_tx_hash": "0xe33b4dc9bd105063a08646713ba964b102829474df68c8a917bcb5bb116331f4",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 7,
+      "channel_id": "0x92845f6f42832d25534ef4a536fc427ef66676827412ecee129330a10c776187",
+      "approve_tx_hash": "0x59746f420a707a1fb96bfe0a86532929b1e99397da4d3b5e6043c3648c4567df",
+      "open_tx_hash": "0x0d5e8634a925e585971bdd1d5d77f46473ca3d5a5c70408bb0236dfd793be249",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0x59746f420a707a1fb96bfe0a86532929b1e99397da4d3b5e6043c3648c4567df",
+        "open_tx": "https://testnet.arcscan.app/tx/0x0d5e8634a925e585971bdd1d5d77f46473ca3d5a5c70408bb0236dfd793be249",
+        "close_tx": "https://testnet.arcscan.app/tx/0xb613575ea7272cef2c1b5df5fb357aa4dbbbcd82797639d6786a65f880a73b71"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 1503
+        }
+      ],
+      "close_tx_hash": "0xb613575ea7272cef2c1b5df5fb357aa4dbbbcd82797639d6786a65f880a73b71",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 8,
+      "channel_id": "0x958aa658fe3b956f2b3d49a77550dbb5fca05bcfc055a279affcf067f2d8d5d7",
+      "approve_tx_hash": "0xeeafccb384a448328ee864afb842c5ac88ecc908d6c92d8938555408c3764bab",
+      "open_tx_hash": "0xb6a0235747487b21a215acedb1b9ecca9cbb6d3dbdcb5d96add2f6bb111b972c",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0xeeafccb384a448328ee864afb842c5ac88ecc908d6c92d8938555408c3764bab",
+        "open_tx": "https://testnet.arcscan.app/tx/0xb6a0235747487b21a215acedb1b9ecca9cbb6d3dbdcb5d96add2f6bb111b972c",
+        "close_tx": "https://testnet.arcscan.app/tx/0x4168f325df0c3b7777f97b9f83bdaa688650b099df6749b7a2c96c624ad8e68e"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 695
+        }
+      ],
+      "close_tx_hash": "0x4168f325df0c3b7777f97b9f83bdaa688650b099df6749b7a2c96c624ad8e68e",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 9,
+      "channel_id": "0x802fef2c702b0933a998d87d1a43696de405762c1ff1032d4f3ba84f00b62ed8",
+      "approve_tx_hash": "0xa3b2905d669357556bc4fcb30b6fa0dff7384a7c514f0a46c524bc5e5d9e444e",
+      "open_tx_hash": "0x3ccacac66484544fc905643cb6e5511681e9d67a8412fc39fb1ae13241b4291f",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0xa3b2905d669357556bc4fcb30b6fa0dff7384a7c514f0a46c524bc5e5d9e444e",
+        "open_tx": "https://testnet.arcscan.app/tx/0x3ccacac66484544fc905643cb6e5511681e9d67a8412fc39fb1ae13241b4291f",
+        "close_tx": "https://testnet.arcscan.app/tx/0x9ab3c51158e47919493c8ea8ed2ec8d07a09aa0823ce68de273dd0481e359c83"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 685
+        }
+      ],
+      "close_tx_hash": "0x9ab3c51158e47919493c8ea8ed2ec8d07a09aa0823ce68de273dd0481e359c83",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 10,
+      "channel_id": "0xb88cce4fddeff78a7121491db482c2c5d22750bb2704e23b899b91c85f91763a",
+      "approve_tx_hash": "0x496f9d40dc5badc102b74fb51f1ac09a5b633cafeb279d450ab534e7351d9b73",
+      "open_tx_hash": "0x5745e86f20a00eb78d0d601da28606e4bfd79f5c1036c3beab449d0aa520c100",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0x496f9d40dc5badc102b74fb51f1ac09a5b633cafeb279d450ab534e7351d9b73",
+        "open_tx": "https://testnet.arcscan.app/tx/0x5745e86f20a00eb78d0d601da28606e4bfd79f5c1036c3beab449d0aa520c100",
+        "close_tx": "https://testnet.arcscan.app/tx/0xbe8f9e720fe0ff435ce74686babbcbddb071f60cdeded08c3377e4d719b0f05f"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 2237
+        }
+      ],
+      "close_tx_hash": "0xbe8f9e720fe0ff435ce74686babbcbddb071f60cdeded08c3377e4d719b0f05f",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 11,
+      "channel_id": "0x835c2c7c8f5c314ee6c2621ec39133678c535d7035e81646c37ff29fee568285",
+      "approve_tx_hash": "0x12252825f0c03594d60c839c708b7f2dd2b71da2885c1611f69842d770010f03",
+      "open_tx_hash": "0xffcd815da7af5c1f8da37094d74bf21649f7d3522206990729305f221e131627",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0x12252825f0c03594d60c839c708b7f2dd2b71da2885c1611f69842d770010f03",
+        "open_tx": "https://testnet.arcscan.app/tx/0xffcd815da7af5c1f8da37094d74bf21649f7d3522206990729305f221e131627",
+        "close_tx": "https://testnet.arcscan.app/tx/0x503a6ad8e0495aa28d6b99a0b0008feaab9fb6ca668f416c4db28627f1390d2a"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 662
+        }
+      ],
+      "close_tx_hash": "0x503a6ad8e0495aa28d6b99a0b0008feaab9fb6ca668f416c4db28627f1390d2a",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 12,
+      "channel_id": "0xa160a121661c552dfc05435c8f828cd3580ad91f9f760c26311eb3cd87c813c8",
+      "approve_tx_hash": "0x531ef8856da0d7e17b07717ec28c5927aa2d60ec107a86c35e61096813f75d90",
+      "open_tx_hash": "0x6d09d702c11e4bb7db8a214f7659a093ebf77576fc5a50ad35e196f4ec829965",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0x531ef8856da0d7e17b07717ec28c5927aa2d60ec107a86c35e61096813f75d90",
+        "open_tx": "https://testnet.arcscan.app/tx/0x6d09d702c11e4bb7db8a214f7659a093ebf77576fc5a50ad35e196f4ec829965",
+        "close_tx": "https://testnet.arcscan.app/tx/0x3c427acdfaeecd86723c2bd5e903f383401c194c6f43b81a1d0a98af28be4970"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 661
+        }
+      ],
+      "close_tx_hash": "0x3c427acdfaeecd86723c2bd5e903f383401c194c6f43b81a1d0a98af28be4970",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 13,
+      "channel_id": "0x24a23eb5c68c3c3b13b1144df3a980dff0adccca85a01012e773b605b7502600",
+      "approve_tx_hash": "0xba24bbba92cf99e22249d7c0482582ee94753de145fd95157ebeac35207b7298",
+      "open_tx_hash": "0x1004554ceb909292038c0abcaccc40a985c2d8bdd1609a8f07707a946dcb7fb8",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0xba24bbba92cf99e22249d7c0482582ee94753de145fd95157ebeac35207b7298",
+        "open_tx": "https://testnet.arcscan.app/tx/0x1004554ceb909292038c0abcaccc40a985c2d8bdd1609a8f07707a946dcb7fb8",
+        "close_tx": "https://testnet.arcscan.app/tx/0xfe401fb2e2acb170868411a18b86449847dd31d85d65842e58ca7fb6cd4ab188"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 1897
+        }
+      ],
+      "close_tx_hash": "0xfe401fb2e2acb170868411a18b86449847dd31d85d65842e58ca7fb6cd4ab188",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 14,
+      "channel_id": "0xe4a63ed3397b9ee97e0742101da9a83bd4c17797dee53db02b98a1bc67135a63",
+      "approve_tx_hash": "0xacc75ed0ad83bce53b8521a0c9d5ba13905cb89bc448ee6eabdb499195f7c73c",
+      "open_tx_hash": "0x6e713e607b1aca2b7655e22f655511db88549573f24b1fc54a3b4106e86076f2",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0xacc75ed0ad83bce53b8521a0c9d5ba13905cb89bc448ee6eabdb499195f7c73c",
+        "open_tx": "https://testnet.arcscan.app/tx/0x6e713e607b1aca2b7655e22f655511db88549573f24b1fc54a3b4106e86076f2",
+        "close_tx": "https://testnet.arcscan.app/tx/0xee85153aac3756455c4c5d9935740087b818b14f3b8eb65f45badbddb895c62b"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 695
+        }
+      ],
+      "close_tx_hash": "0xee85153aac3756455c4c5d9935740087b818b14f3b8eb65f45badbddb895c62b",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 15,
+      "channel_id": "0xb2488a3aeb4fcb524ce71aabf28b4d075c3a846f4befab11438f4f1c1015b50e",
+      "approve_tx_hash": "0xa5d510ce0ad2320f05d3dcbe7b4ed166e524cbb2551a5e15c4e32f20b55da45c",
+      "open_tx_hash": "0x1d3c9bc2ee8440fbe591aa2456042d9b0e89b4247be4f2bde95881945a562e22",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0xa5d510ce0ad2320f05d3dcbe7b4ed166e524cbb2551a5e15c4e32f20b55da45c",
+        "open_tx": "https://testnet.arcscan.app/tx/0x1d3c9bc2ee8440fbe591aa2456042d9b0e89b4247be4f2bde95881945a562e22",
+        "close_tx": "https://testnet.arcscan.app/tx/0x09f2fe6942daa04346805f8f6651ca346bac18335c5f953efebed309d78e9661"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 732
+        }
+      ],
+      "close_tx_hash": "0x09f2fe6942daa04346805f8f6651ca346bac18335c5f953efebed309d78e9661",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 16,
+      "channel_id": "0xd2c65263fc191a42d02ea71dc03385620d0cbd93eb4f5459ebd9fb95474aaf51",
+      "approve_tx_hash": "0x5376ca1485988cda7574ddf3b35b62280283d49fca2123860c8b4c7fbd8b7677",
+      "open_tx_hash": "0xcada3446140f241834070b4fc73099d58fa5373dd20bbc9266539223232edd00",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0x5376ca1485988cda7574ddf3b35b62280283d49fca2123860c8b4c7fbd8b7677",
+        "open_tx": "https://testnet.arcscan.app/tx/0xcada3446140f241834070b4fc73099d58fa5373dd20bbc9266539223232edd00",
+        "close_tx": "https://testnet.arcscan.app/tx/0x5cca5bf5141ef86716290e81668f2b5a4a6c153ad8c5a14cca506d9a8e0d3725"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 671
+        }
+      ],
+      "close_tx_hash": "0x5cca5bf5141ef86716290e81668f2b5a4a6c153ad8c5a14cca506d9a8e0d3725",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    },
+    {
+      "index": 17,
+      "channel_id": "0xd729add9c2549f88592927b311063e242b627939c33a44829c08862476697a27",
+      "approve_tx_hash": "0xd0aefc46db8bf31015fe344f1c89d1f76c28351912b4d853d5ece26b0277742c",
+      "open_tx_hash": "0xba9a446bbb30d839fd1b023496417e754d4bab13003c3f9e4526de92e34ddeb0",
+      "explorer": {
+        "approve_tx": "https://testnet.arcscan.app/tx/0xd0aefc46db8bf31015fe344f1c89d1f76c28351912b4d853d5ece26b0277742c",
+        "open_tx": "https://testnet.arcscan.app/tx/0xba9a446bbb30d839fd1b023496417e754d4bab13003c3f9e4526de92e34ddeb0",
+        "close_tx": "https://testnet.arcscan.app/tx/0x93d1caa1a3ec85daf6296f8d77f57d56aaf9f4fbdacc0d2257f5f988daae115d"
+      },
+      "calls": [
+        {
+          "index": 1,
+          "cumulative_usdc": 0.001,
+          "remaining_calls": 0,
+          "latency_ms": 679
+        }
+      ],
+      "close_tx_hash": "0x93d1caa1a3ec85daf6296f8d77f57d56aaf9f4fbdacc0d2257f5f988daae115d",
+      "cumulative_spent_usdc": 0.001,
+      "refunded_to_agent_usdc": 0
+    }
+  ]
+}
