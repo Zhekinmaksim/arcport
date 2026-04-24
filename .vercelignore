@@ -1,0 +1,16 @@
+.DS_Store
+**/.DS_Store
+.env
+.env.local
+.env.*.local
+.git/
+.github/
+.vercel/
+node_modules/
+cache/
+out/
+transcripts/
+skill/
+arc_audio.mp3
+ArcPort Intro _standalone.html
+ArcPort Outro _standalone.html
