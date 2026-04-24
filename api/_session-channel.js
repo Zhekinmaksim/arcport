@@ -13,6 +13,7 @@ import {
 
 export const SESSION_PRICE_USD = PRICE_USD;
 export const SESSION_PRICE_ATOMIC = PRICE_ATOMIC;
+export const SESSION_OPEN_BUFFER_ATOMIC = '10000'; // 0.01 USDC buffer for approve/open gas.
 
 export const SESSION_CHANNEL_ABI = [
   'event ChannelOpened(bytes32 indexed channelId, address indexed agent, uint256 deposit, uint256 expiry)',
@@ -65,6 +66,13 @@ export function getSessionProvider() {
     { chainId: ARC_CHAIN_ID, name: 'arc-testnet' },
     { staticNetwork: true }
   );
+}
+
+export async function getUsdcBalanceAtomic(address) {
+  if (!address) return 0n;
+  const provider = getSessionProvider();
+  const usdc = new Contract(USDC_ADDRESS, ['function balanceOf(address) view returns (uint256)'], provider);
+  return BigInt((await usdc.balanceOf(address)).toString());
 }
 
 export function getSessionDeposit({ depositUsdc, expectedCalls } = {}) {

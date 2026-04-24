@@ -12,6 +12,8 @@ import { resolveWalletByToken } from './_wallet-identity.js';
 import {
   getSessionContractAddress,
   getSessionDeposit,
+  getUsdcBalanceAtomic,
+  SESSION_OPEN_BUFFER_ATOMIC,
   parseOpenedChannel,
   USDC_ADDRESS,
 } from './_session-channel.js';
@@ -29,6 +31,13 @@ const sbPost = (table, body) =>
     headers: { ...sbH(), 'Prefer': 'return=representation' },
     body: JSON.stringify(body),
   });
+
+function formatAtomicUsdc(value) {
+  const atomic = BigInt(value || 0);
+  const whole = atomic / 1000000n;
+  const fraction = String(atomic % 1000000n).padStart(6, '0').slice(0, 3);
+  return `${whole}.${fraction}`;
+}
 
 async function persistChannel(record) {
   const response = await sbPost('session_channels', record).catch(() => null);
@@ -78,6 +87,17 @@ export default async function handler(req, res) {
       depositUsdc: req.body?.deposit_usdc,
       expectedCalls: req.body?.expected_calls,
     });
+    const walletBalanceAtomic = await getUsdcBalanceAtomic(wallet.arc_address);
+    const requiredAtomic = BigInt(deposit.deposit_atomic) + BigInt(SESSION_OPEN_BUFFER_ATOMIC);
+    if (walletBalanceAtomic < requiredAtomic) {
+      return res.status(400).json({
+        error: `Operator wallet needs at least ${formatAtomicUsdc(requiredAtomic)} USDC onchain to open this session. Gateway balance is only for charge mode; fund the wallet on Arc Testnet or deposit less into Gateway.`,
+        reason: 'operator_wallet_balance_too_low',
+        wallet_balance_usdc: formatAtomicUsdc(walletBalanceAtomic),
+        required_wallet_balance_usdc: formatAtomicUsdc(requiredAtomic),
+        session_budget_usdc: deposit.deposit_usdc,
+      });
+    }
 
     const approveTxId = await createContractExecution({
       walletId: wallet.circle_wallet_id,

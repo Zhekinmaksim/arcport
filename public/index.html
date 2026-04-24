@@ -2466,7 +2466,7 @@ function renderWallet() {
         <button class="btn btn-primary btn-block" onclick="window.open('https://faucet.circle.com','_blank')">
           Fund wallet on Arc Testnet &rarr;
         </button>
-        <p class="c3 f12 mono" style="text-align:center;margin-top:8px">${isCircle ? 'Fund wallet  →  deposit to Gateway  →  open session' : 'faucet.circle.com  →  Arc Testnet  →  fund wallet'}</p>
+        <p class="c3 f12 mono" style="text-align:center;margin-top:8px">${isCircle ? 'Fund wallet → session uses wallet balance; Gateway is charge mode' : 'faucet.circle.com  →  Arc Testnet  →  fund wallet'}</p>
       </div>
     </div>` : `
     <div class="card" style="border-color:var(--blue-b)">
@@ -2506,7 +2506,7 @@ function renderWallet() {
         <div class="steps">
           <div class="step"><div class="step-num">1</div><div class="step-text">Create wallet (EOA for compatibility, Circle for ArcPort V2)</div></div>
           <div class="step"><div class="step-num">2</div><div class="step-text">Fund the Circle wallet at faucet.circle.com on Arc Testnet</div></div>
-          <div class="step"><div class="step-num">3</div><div class="step-text">Deposit some USDC into Gateway, then use identity_key in Playground</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">For charge mode, deposit to Gateway. For session mode, keep enough USDC in the wallet.</div></div>
         </div>
       </div>
     </div>`;
@@ -2683,6 +2683,13 @@ async function openSession(amount = '0.01') {
   }
   if (isSessionBusy()) {
     toast('Session request already in progress', 'warn');
+    return;
+  }
+  const requiredWalletBalance = Number(amount) + 0.01;
+  if (S.balance < requiredWalletBalance) {
+    const message = `Need at least ${fmtU(requiredWalletBalance)} USDC in operator wallet. Gateway balance cannot open sessions.`;
+    addLog('warn', message);
+    toast(message, 'warn');
     return;
   }
 
