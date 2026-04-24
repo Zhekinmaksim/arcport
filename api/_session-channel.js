@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { Contract, Interface, JsonRpcProvider, parseUnits } from 'ethers';
+import { Contract, getAddress, Interface, JsonRpcProvider, parseUnits } from 'ethers';
 
 import {
   ARC_CHAIN_ID,
@@ -41,6 +41,15 @@ export const SESSION_VOUCHER_TYPES = {
 
 const sessionInterface = new Interface(SESSION_CHANNEL_ABI);
 
+export function normalizeAddress(value, label = 'address') {
+  const raw = String(value || '').trim();
+  try {
+    return getAddress(raw);
+  } catch (_) {
+    throw new Error(`${label} must be a valid 0x address`);
+  }
+}
+
 function readLocalEnvValue(name) {
   const envPath = path.join(process.cwd(), '.env.local');
   if (!existsSync(envPath)) return null;
@@ -57,7 +66,7 @@ function readLocalEnvValue(name) {
 export function getSessionContractAddress() {
   const address = process.env.SESSION_CHANNEL_CONTRACT || readLocalEnvValue('SESSION_CHANNEL_CONTRACT');
   if (!address) throw new Error('SESSION_CHANNEL_CONTRACT required');
-  return address;
+  return normalizeAddress(address, 'SESSION_CHANNEL_CONTRACT');
 }
 
 export function getSessionProvider() {
@@ -70,16 +79,19 @@ export function getSessionProvider() {
 
 export async function getUsdcBalanceAtomic(address) {
   if (!address) return 0n;
+  const owner = normalizeAddress(address, 'wallet address');
   const provider = getSessionProvider();
-  const usdc = new Contract(USDC_ADDRESS, ['function balanceOf(address) view returns (uint256)'], provider);
-  return BigInt((await usdc.balanceOf(address)).toString());
+  const usdc = new Contract(normalizeAddress(USDC_ADDRESS, 'USDC_ADDRESS'), ['function balanceOf(address) view returns (uint256)'], provider);
+  return BigInt((await usdc.balanceOf(owner)).toString());
 }
 
 export async function getUsdcAllowanceAtomic(owner, spender) {
   if (!owner || !spender) return 0n;
+  const normalizedOwner = normalizeAddress(owner, 'wallet address');
+  const normalizedSpender = normalizeAddress(spender, 'session contract address');
   const provider = getSessionProvider();
-  const usdc = new Contract(USDC_ADDRESS, ['function allowance(address,address) view returns (uint256)'], provider);
-  return BigInt((await usdc.allowance(owner, spender)).toString());
+  const usdc = new Contract(normalizeAddress(USDC_ADDRESS, 'USDC_ADDRESS'), ['function allowance(address,address) view returns (uint256)'], provider);
+  return BigInt((await usdc.allowance(normalizedOwner, normalizedSpender)).toString());
 }
 
 export function getSessionDeposit({ depositUsdc, expectedCalls } = {}) {
@@ -119,9 +131,10 @@ export async function parseOpenedChannel({ txHash, contractAddress }) {
   const provider = getSessionProvider();
   const receipt = await provider.getTransactionReceipt(txHash);
   if (!receipt) throw new Error(`Receipt not found for ${txHash}`);
+  const normalizedContract = normalizeAddress(contractAddress, 'session contract address').toLowerCase();
 
   for (const log of receipt.logs) {
-    if (log.address.toLowerCase() !== contractAddress.toLowerCase()) continue;
+    if (log.address.toLowerCase() !== normalizedContract) continue;
     try {
       const parsed = sessionInterface.parseLog(log);
       if (parsed?.name === 'ChannelOpened') {
@@ -143,7 +156,7 @@ export async function parseOpenedChannel({ txHash, contractAddress }) {
 
 export async function getOnchainChannel(channelId, contractAddress) {
   const provider = getSessionProvider();
-  const contract = new Contract(contractAddress, SESSION_CHANNEL_ABI, provider);
+  const contract = new Contract(normalizeAddress(contractAddress, 'session contract address'), SESSION_CHANNEL_ABI, provider);
   const channel = await contract.getChannel(channelId);
   return {
     agent: channel[0],
@@ -157,7 +170,7 @@ export async function getOnchainChannel(channelId, contractAddress) {
 
 export async function verifySessionVoucher({ channelId, cumulative, signature, contractAddress }) {
   const provider = getSessionProvider();
-  const contract = new Contract(contractAddress, SESSION_CHANNEL_ABI, provider);
+  const contract = new Contract(normalizeAddress(contractAddress, 'session contract address'), SESSION_CHANNEL_ABI, provider);
   return contract.verifyVoucher(channelId, cumulative, signature);
 }
 
@@ -165,9 +178,10 @@ export async function parseClosedChannel({ txHash, contractAddress }) {
   const provider = getSessionProvider();
   const receipt = await provider.getTransactionReceipt(txHash);
   if (!receipt) throw new Error(`Receipt not found for ${txHash}`);
+  const normalizedContract = normalizeAddress(contractAddress, 'session contract address').toLowerCase();
 
   for (const log of receipt.logs) {
-    if (log.address.toLowerCase() !== contractAddress.toLowerCase()) continue;
+    if (log.address.toLowerCase() !== normalizedContract) continue;
     try {
       const parsed = sessionInterface.parseLog(log);
       if (parsed?.name === 'ChannelClosed') {
@@ -192,7 +206,7 @@ export function buildSessionVoucherTypedData(channelId, cumulative, contractAddr
       name: 'ArcStreamChannel',
       version: '1',
       chainId: ARC_CHAIN_ID,
-      verifyingContract: contractAddress,
+      verifyingContract: normalizeAddress(contractAddress, 'session contract address'),
     },
     types: SESSION_VOUCHER_TYPES,
     primaryType: 'Voucher',

@@ -25,7 +25,7 @@ export function normalizeWalletRow(row = {}) {
     wallet_id: row.wallet_id || row.id || null,
     identity_key: row.identity_key || null,
     agent_key: row.agent_key || null,
-    arc_address: row.arc_address || null,
+    arc_address: row.arc_address ? String(row.arc_address).trim() : null,
     circle_wallet_id: row.circle_wallet_id || null,
     wallet_type: walletType,
     custody_provider: custodyProvider,
