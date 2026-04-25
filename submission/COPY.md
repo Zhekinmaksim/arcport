@@ -1,144 +1,202 @@
 # ArcPort Submission Copy
 
-Use these blocks directly in the submission form.
+Use this file as the source of truth for the lablab.ai submission form.
 
-## Canonical Positioning
+Canonical sentence:
 
 ArcPort V2 introduces session-based API payments for repeated agent usage.
 
-Use this exact sentence in the submission, README, video voiceover, and public posts.
-
-## Project Name
+## Submission Title
 
 ArcPort
 
-## One-Line Summary
-
-ArcPort is an API payment layer for agents on Arc with two payment modes: charge mode for one-off calls via Circle Nanopayments, and session mode for repeated usage with one onchain open and one onchain close. The web app is an operator control plane; the runtime user is the agent.
-
 ## Short Description
 
-ArcPort lets agents pay `$0.001 USDC` per API call on Arc. Charge mode handles one-off calls through Circle Nanopayments. V2 adds session mode for repeated usage: open once onchain, make repeated signed calls offchain, close once, and refund the unused balance. The web app is a control plane for setup, proof, and demo.
+ArcPort is an API payment layer for agents on Arc: charge mode for one-off Circle Nanopayments and session mode for repeated Gemini/API calls with one onchain open, signed offchain usage, one close, refund, and proof.
 
 ## Long Description
 
 ArcPort is an API payment layer for agents on Arc.
 
-The product has two payment modes.
+ArcPort V2 introduces session-based API payments for repeated agent usage.
 
-The runtime user is the agent. The web app is an operator console for wallet setup, session management, and proof.
+The product has two payment modes. Charge mode is the simple path: one paid API call through Circle Nanopayments. Session mode is the differentiator: open one session onchain, let the agent make repeated signed API calls offchain, close once onchain, and refund the unused balance.
 
-Charge mode is for one-off usage. The agent requests an API, receives a `402` payment challenge, signs `X-Payment`, and gets the response after successful verification through Circle Nanopayments.
+This matters because $0.001 API pricing breaks if every request needs its own onchain transaction. Gas and settlement overhead can become larger than the call price. ArcPort keeps one-off calls simple with charge mode and makes repeated agent usage practical with session mode.
 
-Session mode is for repeated usage. The agent opens a session onchain with a fixed USDC budget, makes repeated signed calls offchain, and closes the session onchain once. The platform takes the cumulative spend and refunds the unused balance.
+The browser demo is not the final runtime user. It is a control plane for operators: fund the wallet, open a session, run the demo, close the session, and inspect proof. The runtime user is the agent calling APIs through /api/session-open, /api/session-call, and /api/session-close.
 
-This makes ArcPort useful as a practical operator surface, not just abstract payment infrastructure. Agents can run repeated paid API usage under one budget, while operators can open sessions, inspect usage, and verify the full lifecycle through open transaction, close transaction, spend, refund, and proof.
+The demo uses Gemini Inference as a paid API in the marketplace. A judge can open a 10-call session, run 3 Gemini prompts, close the session, see the refund, and verify the lifecycle in Proof Mode.
 
-This matters because `$0.001` API pricing breaks if every request needs its own onchain payment transaction. ArcPort handles one-off calls with charge mode and repeated usage with session mode. The marketplace also includes a paid Gemini Inference endpoint backed by Google AI Studio, so the same payment model can be shown against real model inference.
+Proof Mode shows the full payment lifecycle: open tx, close tx, calls total, cumulative spent, refund, and channel status. The repo also includes a reproducible evidence run with 51 onchain transactions: 17 approve, 17 open, and 17 close transactions on Arc Testnet.
 
-## Problem
+ArcPort is useful as repeated paid API usage for agents, a practical control plane for operators, and a verifiable payment lifecycle for reviewers.
 
-Subscriptions and prepaid plans are built for humans. Agents need to pay for usage as it happens. One-off calls can work through a nanopayment flow, but repeated usage needs a cleaner model than a fresh onchain step on every request. It also needs an operator surface for provisioning and auditability without turning the product into a human-only app.
+## Participation Mode
 
-## Solution
+Online
 
-ArcPort splits the product into two paths:
+## Recommended Event Tracks
 
-- **charge mode** for one-off API calls through Circle Nanopayments
-- **session mode** for repeated usage through one onchain open, many signed offchain calls, and one onchain close with refund
+Select these if the form allows multiple tracks:
 
-It also splits the product surface into two layers:
+- Per-API Monetization Engine
+- Usage-Based Compute Billing
+- Google
 
-- **web control plane** for provisioning wallets, opening sessions, and inspecting proof
-- **API runtime layer** for the actual agent-to-API payment flow
+If only one track is allowed, choose:
 
-In practice, an agent integrates through `/api/session-open`, `/api/session-call`, and `/api/session-close`. The browser is only the operator surface shown in the demo.
+- Usage-Based Compute Billing
 
-After the hackathon, the natural next step is not a larger browser app. It is a more agent-native runtime surface with stable machine-facing API contracts and SDKs, while the web UI remains a control plane for setup and auditability.
+## Recommended Categories
 
-## Why Arc
+Use the closest available options in the form:
 
-Arc makes this pricing model viable because the product is priced in USDC and the system does not have to push a separate onchain payment for every `$0.001` call.
+- AI Agents
+- Payments
+- Developer Tools
+- Web3
 
-## Why Circle
-
-Charge mode uses Circle Nanopayments for one-off paid API calls. Session mode is built alongside that path for repeated usage, where the agent opens a budget once and spends against it across multiple calls.
-
-## Who Uses ArcPort
-
-- **agent builders** integrate the runtime payment layer into their agents
-- **agent operators** use the web control plane to provision wallets and inspect proof
-- **API providers** register endpoints and monetize usage per call
-
-## What The Demo Shows
-
-The demo shows one clean session lifecycle around Gemini Inference:
-
-1. open session
-2. run 3 paid prompts
-3. close session
-4. refund unused balance
-5. inspect proof
-
-Proof Mode then shows:
-
-- `open tx`
-- `close tx`
-- `calls total`
-- `cumulative spent`
-- `refund`
-- `channel status`
-
-## Proof Of Activity
-
-ArcPort already generated proof for **51 onchain transactions** through a reproducible session proof run:
-
-- `17` approve transactions
-- `17` session open transactions
-- `17` session close transactions
-
-Artifacts:
-
-- [session-proof-latest.md](../proof/session-proof-latest.md)
-- [session-proof-latest.json](../proof/session-proof-latest.json)
-
-## Why This Fits The Hackathon
-
-ArcPort covers the main judging points directly:
-
-- **Arc**
-- **USDC**
-- **Circle Nanopayments**
-- **real per-action pricing**
-- **50+ onchain transactions**
-- **clear explanation of why `$0.001` pricing breaks under traditional gas**
-
-## What Is New Here
-
-Charge-per-call is the obvious starting point.
-
-The new part in ArcPort V2 is session mode: repeated API usage under one session budget, with one onchain open, many signed calls, one onchain close, and refund of the unused balance.
-
-## If The Form Asks For Differentiation
-
-Most nanopayment demos stop at one paid request.
-
-ArcPort keeps that one-off path, but adds session mode for repeated usage. That gives the product a second payment model instead of treating every call as an isolated payment event.
-
-The product is also not framed as a consumer app. The web UI is a control plane. The actual runtime user is the agent.
-
-## If The Form Asks For Technical Stack
+## Technologies Used
 
 - Arc Testnet
 - USDC
-- Circle Dev-Controlled Wallets
 - Circle Nanopayments
+- Circle Dev-Controlled Wallets
+- Circle Gateway
 - Google AI Studio / Gemini API
-- x402 / `X-Payment`
+- x402 / X-Payment
 - Solidity session contract
 - Node.js / Vercel Functions
 - Supabase
 
-## If The Form Asks For The Core Demo Line
+## Did You Use Circle Products?
+
+Yes.
+
+## Circle Developer Console Account Email
+
+Use the email connected to the Circle Developer Console account used for the demo wallets.
+
+## Circle Product Feedback
+
+Products used:
+
+ArcPort used Arc Testnet, USDC, Circle Dev-Controlled Wallets, Circle Gateway, and Circle Nanopayments. Charge mode uses the Circle Nanopayments pattern for one-off paid API calls. Session mode is built beside that path for repeated agent usage where a fixed USDC budget is opened once, spent through signed calls, and settled once.
+
+Use case:
+
+The project is built around agent API usage. Agents should not need subscriptions or manual approval for every small request. They need a way to pay per action, stay inside a budget, and leave an auditable trail. Circle's stack fits this because payments are USDC-native and can be tied to API access rather than human checkout flows.
+
+What worked well:
+
+Dev-Controlled Wallets made it possible to create an operator wallet and run the demo without asking a judge to connect a personal wallet. Circle Gateway worked well for the one-off charge-mode balance. The Nanopayments model maps cleanly to API calls, especially when the price is small enough to make subscriptions feel unnecessary. Arc Testnet confirmation speed was good enough for a live demo when the network was not congested.
+
+Challenges:
+
+The biggest product gap for repeated usage is that one paid API call is not enough for agents. Real agents make bursts of calls. That is why ArcPort adds session mode. During development, the main friction was making wallet balance, Gateway balance, session budget, and refund easy to explain in the UI. Another issue was operational reliability around testnet RPC congestion and transaction-pool errors. For demos, state-changing retries also need idempotency keys; otherwise retrying a session open, call, or close can duplicate a mutation.
+
+Recommendations:
+
+Circle's developer experience would be stronger with first-class examples for repeated agent usage, not only single paid requests. Helpful additions would be official idempotency guidance for payment API mutations, clearer examples for Gateway balance versus wallet balance, better testnet congestion messaging, and a reference pattern for session-style budgets where many signed calls settle under one payment lifecycle.
+
+## Submission Video Post On X
+
+Post the video from the project account or personal account. In the same post, tag:
+
+- @buildoncircle
+- @arc
+- @lablabai
+
+Suggested post:
+
+ArcPort V2 for the Agentic Economy on Arc hackathon.
 
 ArcPort V2 introduces session-based API payments for repeated agent usage.
+
+Most demos stop at one paid API call. ArcPort keeps that path, then adds session mode:
+
+1. open one session onchain
+2. run repeated signed API calls offchain
+3. close once onchain
+4. refund unused balance
+5. show proof
+
+The demo uses Gemini Inference as a paid API:
+
+- open a 10-call session
+- run 3 paid Gemini prompts
+- close the session
+- verify open tx, close tx, calls total, cumulative spent, refund, and channel status
+
+Charge mode is the simple path. Session mode is the differentiator.
+
+Evidence already generated:
+
+- 51 onchain tx
+- 17 approve
+- 17 open
+- 17 close
+- Arcscan proof included
+
+ArcPort is not a consumer marketplace first. The web app is the operator control plane. The runtime user is the agent.
+
+Built with Arc Testnet, USDC, Circle Nanopayments, Circle Wallets, Circle Gateway, Google AI Studio/Gemini, x402, Solidity, Vercel, and Supabase.
+
+@buildoncircle @arc @lablabai
+
+## Video Upload
+
+Use the final demo video with English subtitles.
+
+## Slide Presentation PDF
+
+Use:
+
+submission/ArcPort-slides.pdf
+
+## Cover Image
+
+Use a 16:9 frame from the deck or video where the viewer can read:
+
+- ArcPort V2
+- Charge mode
+- Session mode
+- 51 tx proof
+- open -> calls -> close -> refund
+
+## Core Demo Path
+
+1. Prepared Circle wallet is funded on Arc Testnet.
+2. Open Wallet.
+3. Open a 10-call session.
+4. Open Playground.
+5. Select Session mode and Gemini Inference.
+6. Run 3 paid prompts.
+7. Return to Wallet.
+8. Close the session.
+9. Open Proof Mode.
+10. Show open tx, close tx, calls total, cumulative spent, refund, and channel status.
+
+## Differentiation
+
+Do not frame ArcPort as just another marketplace.
+
+Use this framing:
+
+ArcPort is a payment layer for repeated paid API usage by agents. The browser is a control plane. The machine-facing runtime is the API session flow.
+
+Use this comparison:
+
+- Charge mode: one-off calls
+- Session mode: repeated usage
+- Proof Mode: verifiable lifecycle
+- 51 tx evidence: real activity on Arc Testnet
+
+## Links To Include Where Useful
+
+- Live app: https://arcport.xyz
+- GitHub: https://github.com/Zhekinmaksim/arcport
+- Session contract: https://testnet.arcscan.app/address/0x594a7E570d1f915f1e11d504d0e89de28680cC98?tab=txs
+- Evidence file: proof/session-proof-latest.md
+- Slide deck: submission/ArcPort-slides.pdf
