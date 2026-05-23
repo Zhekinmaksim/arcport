@@ -2,8 +2,8 @@
 name: arcport-hermes
 description: |
   Use ArcPort from Hermes as a paid API/payment skill on Arc. Use when Hermes
-  needs one-off paid API calls through charge mode, repeated Gemini/API calls
-  through session mode, or an auditable Arc Testnet payment lifecycle with open
+  needs one-off paid API calls through charge mode, repeated Social Signal
+  Intelligence or Gemini/API calls through session mode, or an auditable Arc Testnet payment lifecycle with open
   tx, close tx, calls total, cumulative spend, refund, and Arcscan proof.
 version: 2.0.0
 author: Zhekinmaksim
@@ -12,7 +12,7 @@ homepage: https://github.com/Zhekinmaksim/arcport
 platforms: [macos, linux]
 metadata:
   hermes:
-    tags: [arc, circle, usdc, payments, agents, api-monetization, gemini]
+    tags: [arc, circle, usdc, payments, agents, social-trading, api-monetization, gemini]
     category: blockchain
     required_environment_variables:
       - name: ARCPORT_URL
@@ -82,23 +82,51 @@ python scripts/arcport.py call gemini \
   --key awi_...
 ```
 
+For Agora RFB 06:
+
+```bash
+python scripts/arcport.py call social-signal \
+  --leader "HL Whale Alpha" \
+  --asset BTC \
+  --direction long \
+  --confidence 0.74 \
+  --win-rate 0.62 \
+  --drawdown-pct 8 \
+  --key awi_...
+```
+
 **Session mode**
 
 Use when Hermes expects repeated usage:
 
 ```bash
-python scripts/arcport.py session open --calls 10 --key awi_...
+python scripts/arcport.py session open \
+  --calls 10 \
+  --task "RFB 06 social trading signal analysis" \
+  --allowed-api social-signal \
+  --allowed-api gemini \
+  --key awi_...
 
-python scripts/arcport.py session call <channel_id> gemini \
-  --prompt "Give one bullet on why agents need budgets." \
+python scripts/arcport.py session call <channel_id> social-signal \
+  --leader "HL Whale Alpha" \
+  --asset BTC \
+  --direction long \
+  --confidence 0.74 \
+  --win-rate 0.62 \
+  --drawdown-pct 8 \
+  --key awi_...
+
+python scripts/arcport.py session call <channel_id> social-signal \
+  --leader "Momentum Desk" \
+  --asset SOL \
+  --direction long \
+  --confidence 0.58 \
+  --win-rate 0.51 \
+  --drawdown-pct 18 \
   --key awi_...
 
 python scripts/arcport.py session call <channel_id> gemini \
-  --prompt "Rewrite: agents should pay per repeated API usage." \
-  --key awi_...
-
-python scripts/arcport.py session call <channel_id> gemini \
-  --prompt "Return JSON with keys charge_mode and session_mode." \
+  --prompt "Summarize the social trading decision in one short memo." \
   --key awi_...
 
 python scripts/arcport.py session close <channel_id> --key awi_...
@@ -142,6 +170,7 @@ Important balance model:
 
 | Command | Use | Mode |
 | --- | --- | --- |
+| `social-signal` | RFB 06 social trading signal intelligence | charge + session |
 | `gemini` | Google AI Studio / Gemini inference | charge + session |
 | `weather` | Weather by city | charge + session |
 | `fx` | FX rates | charge + session |
@@ -167,7 +196,8 @@ For a grant-facing V3 demo, use this exact task shape:
 ```text
 Use ArcPort session mode as the runtime agent.
 Open a 10-call session.
-Make 3 paid Gemini calls.
+Make 3 paid Social Signal Intelligence calls.
+Optionally make 1 Gemini call for a decision memo.
 Close the session.
 Summarize open tx, close tx, calls total, cumulative spent, refund, and Arcscan links.
 ```
@@ -183,7 +213,7 @@ Summarize open tx, close tx, calls total, cumulative spent, refund, and Arcscan 
 
 ArcPort as a Hermes skill turns Hermes into a paid API consumer on Arc.
 
-The interesting part is session mode. Hermes can open one funded session, make repeated signed Gemini/API calls, then close once and refund unused balance. That is closer to real agent usage than asking the user to approve every micro-call one by one.
+The interesting part is session mode. Hermes can open one funded session, make repeated signed Social Signal Intelligence or Gemini/API calls, then close once and refund unused balance. That is closer to real agent usage than asking the user to approve every micro-call one by one.
 
 Live app: https://arcport.xyz
 
@@ -196,6 +226,6 @@ Minimum proof sequence:
 1. Hermes starts with `arcport-hermes` loaded.
 2. User asks Hermes to use ArcPort session mode.
 3. Hermes runs `python scripts/arcport.py session open --calls 10`.
-4. Hermes runs 3 `session call` commands against `gemini`.
+4. Hermes runs 3 `session call` commands against `social-signal`.
 5. Hermes runs `session close`.
 6. Output shows `Channel`, `Open tx`, `Calls total`, `Cumulative spent`, `Refund`, and `Arcscan`.

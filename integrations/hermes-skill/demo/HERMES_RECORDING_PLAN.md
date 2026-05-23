@@ -11,7 +11,7 @@ The screen must show Hermes itself doing the work:
 1. Hermes loads the `arcport-hermes` skill.
 2. Hermes uses the skill's local CLI.
 3. Hermes opens an ArcPort session.
-4. Hermes makes repeated paid Gemini/API calls.
+4. Hermes makes repeated paid Social Signal Intelligence calls.
 5. Hermes closes the session.
 6. Output shows proof: open tx, close tx, calls total, cumulative spent, refund, Arcscan.
 
@@ -79,12 +79,15 @@ Hermes loads ArcPort as a payment skill.
 Paste this prompt into Hermes:
 
 ```text
-Use the ArcPort Hermes skill. Open a 10-call session, make 3 paid Gemini calls, close the session, and summarize the payment proof.
+Use the ArcPort Hermes skill as an external social trading agent.
 
-Use these prompts:
-1. Give one bullet on why agents need API budgets.
-2. Rewrite in one sentence: session mode lets agents make repeated paid API calls under one budget.
-3. Return JSON with keys charge_mode, session_mode, and refund.
+Open a 10-call session for RFB 06 social trading signal analysis.
+Make 3 paid Social Signal Intelligence calls:
+1. BTC long signal with moderate risk.
+2. SOL long signal with higher drawdown.
+3. ETH short signal with weak confidence.
+Then make one Gemini call to summarize the decision memo.
+Close the session and summarize the payment proof.
 ```
 
 Make sure Hermes runs the commands itself through the terminal tool. The goal is to show an external agent using ArcPort, not ArcPort launching Hermes internally.
@@ -92,7 +95,7 @@ Make sure Hermes runs the commands itself through the terminal tool. The goal is
 Caption:
 
 ```text
-The user asks Hermes for repeated paid API usage, not a browser walkthrough.
+The user asks Hermes for repeated paid social trading intelligence, not a browser walkthrough.
 ```
 
 ### 3. Hermes Opens Session
@@ -100,7 +103,11 @@ The user asks Hermes for repeated paid API usage, not a browser walkthrough.
 Expected tool command:
 
 ```bash
-python scripts/arcport.py session open --calls 10 --task "ArcPort V3 Hermes runtime demo"
+python scripts/arcport.py session open \
+  --calls 10 \
+  --task "RFB 06 social trading signal analysis" \
+  --allowed-api social-signal \
+  --allowed-api gemini
 ```
 
 Show output fields:
@@ -122,9 +129,10 @@ One onchain open creates the session budget.
 Expected tool commands:
 
 ```bash
-python scripts/arcport.py session call <channel_id> gemini --prompt "Give one bullet on why agents need API budgets."
-python scripts/arcport.py session call <channel_id> gemini --prompt "Rewrite in one sentence: session mode lets agents make repeated paid API calls under one budget."
-python scripts/arcport.py session call <channel_id> gemini --prompt "Return JSON with keys charge_mode, session_mode, and refund."
+python scripts/arcport.py session call <channel_id> social-signal --leader "HL Whale Alpha" --asset BTC --direction long --confidence 0.74 --win-rate 0.62 --drawdown-pct 8
+python scripts/arcport.py session call <channel_id> social-signal --leader "Momentum Desk" --asset SOL --direction long --confidence 0.58 --win-rate 0.51 --drawdown-pct 18
+python scripts/arcport.py session call <channel_id> social-signal --leader "Contrarian Flow" --asset ETH --direction short --confidence 0.41 --win-rate 0.47 --drawdown-pct 22
+python scripts/arcport.py session call <channel_id> gemini --prompt "Summarize the social trading decision in one short memo."
 ```
 
 Show output fields:

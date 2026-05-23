@@ -24,6 +24,7 @@ ARC_CHAIN_ID = "5042002"
 ARC_USDC_ADDRESS = "0x3600000000000000000000000000000000000000"
 
 API_IDS = {
+    "social-signal": "social-signal-1",
     "gemini": "gemini-1",
     "weather": "weather-1",
     "fx": "fx-1",
@@ -32,6 +33,21 @@ API_IDS = {
     "country": "countries-1",
     "joke": "joke-1",
 }
+
+
+def _social_signal_params(args) -> dict:
+    return {
+        "leader": args.leader,
+        "risk_profile": args.risk_profile,
+        "signals": [{
+            "asset": args.asset,
+            "direction": args.direction,
+            "confidence": args.confidence,
+            "win_rate": args.win_rate,
+            "drawdown_pct": args.drawdown_pct,
+            "source": args.source,
+        }],
+    }
 
 
 def _get_base_url() -> str:
@@ -145,7 +161,9 @@ def cmd_call(args) -> None:
     api_id = API_IDS[api_name]
 
     params: dict = {}
-    if api_name == "gemini":
+    if api_name == "social-signal":
+        params = _social_signal_params(args)
+    elif api_name == "gemini":
         if not args.prompt:
             print("ERROR: --prompt is required for gemini", file=sys.stderr)
             sys.exit(1)
@@ -214,7 +232,9 @@ def cmd_session_call(args) -> None:
 
     key = _get_key(args.key)
     params: dict = {}
-    if api_name == "gemini":
+    if api_name == "social-signal":
+        params = _social_signal_params(args)
+    elif api_name == "gemini":
         if not args.prompt:
             print("ERROR: --prompt is required for gemini", file=sys.stderr)
             sys.exit(1)
@@ -322,7 +342,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_call.add_argument(
         "api_name",
         choices=list(API_IDS),
-        help="API to call: gemini, weather, fx, crypto, geoip, country, joke",
+        help="API to call: social-signal, gemini, weather, fx, crypto, geoip, country, joke",
     )
     p_call.add_argument("--key", default=None, help="Identity key (awi_...) or legacy agent key (apk_...)")
     p_call.add_argument("--prompt", default=None, help="Prompt for Gemini")
@@ -333,6 +353,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_call.add_argument("--base", default="USD", help="Base currency (fx)")
     p_call.add_argument("--ip", default=None, help="IP address (geoip)")
     p_call.add_argument("--name", default=None, help="Country name (country)")
+    p_call.add_argument("--leader", default="HL Whale Alpha", help="Trader/leader name (social-signal)")
+    p_call.add_argument("--risk-profile", default="moderate", help="Risk profile: conservative, moderate, aggressive")
+    p_call.add_argument("--asset", default="BTC", help="Asset symbol (social-signal)")
+    p_call.add_argument("--direction", default="long", help="Signal direction (social-signal)")
+    p_call.add_argument("--confidence", type=float, default=0.74, help="Signal confidence 0-1 (social-signal)")
+    p_call.add_argument("--win-rate", type=float, default=0.62, help="Leader win rate 0-1 (social-signal)")
+    p_call.add_argument("--drawdown-pct", type=float, default=8.0, help="Leader drawdown percent (social-signal)")
+    p_call.add_argument("--source", default="leaderboard", help="Signal source (social-signal)")
 
     p_session = sub.add_parser("session", help="Session mode for repeated paid calls")
     session_sub = p_session.add_subparsers(dest="session_command")
@@ -346,7 +374,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--allowed-api",
         action="append",
         choices=list(API_IDS),
-        default=["gemini"],
+        default=["social-signal", "gemini"],
         help="API allowed by the session policy. Repeat for multiple APIs.",
     )
 
@@ -362,6 +390,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_session_call.add_argument("--base", default="USD", help="Base currency (fx)")
     p_session_call.add_argument("--ip", default=None, help="IP address (geoip)")
     p_session_call.add_argument("--name", default=None, help="Country name (country)")
+    p_session_call.add_argument("--leader", default="HL Whale Alpha", help="Trader/leader name (social-signal)")
+    p_session_call.add_argument("--risk-profile", default="moderate", help="Risk profile: conservative, moderate, aggressive")
+    p_session_call.add_argument("--asset", default="BTC", help="Asset symbol (social-signal)")
+    p_session_call.add_argument("--direction", default="long", help="Signal direction (social-signal)")
+    p_session_call.add_argument("--confidence", type=float, default=0.74, help="Signal confidence 0-1 (social-signal)")
+    p_session_call.add_argument("--win-rate", type=float, default=0.62, help="Leader win rate 0-1 (social-signal)")
+    p_session_call.add_argument("--drawdown-pct", type=float, default=8.0, help="Leader drawdown percent (social-signal)")
+    p_session_call.add_argument("--source", default="leaderboard", help="Signal source (social-signal)")
     p_session_call.add_argument("--task", default="ArcPort V3 Hermes runtime demo", help="Human-readable agent task label")
 
     p_session_close = session_sub.add_parser("close", help="Close a session and refund unused budget")
