@@ -1,4 +1,4 @@
-import { Contract, JsonRpcProvider, Wallet } from 'ethers';
+import { Contract, JsonRpcProvider, Wallet, parseUnits } from 'ethers';
 
 import { signDeveloperTypedData } from './_circle.js';
 import { ARC_CHAIN_ID, ARC_RPC } from './_arcport-payment.js';
@@ -39,6 +39,27 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function arcFeePolicy() {
+  return {
+    maxFeePerGas: parseUnits(process.env.ARC_MAX_FEE_GWEI || '250', 'gwei'),
+    maxPriorityFeePerGas: parseUnits(process.env.ARC_PRIORITY_FEE_GWEI || '2', 'gwei'),
+  };
+}
+
+async function buildCloseOverrides(contract, channelId, cumulativeAtomic, signature) {
+  const feePolicy = arcFeePolicy();
+  const overrides = { ...feePolicy };
+
+  try {
+    const estimatedGas = await contract.close.estimateGas(channelId, cumulativeAtomic, signature, feePolicy);
+    overrides.gasLimit = (estimatedGas * 130n) / 100n;
+  } catch (_) {
+    // Estimation can fail during RPC congestion; explicit EIP-1559 fees still keep the tx policy predictable.
+  }
+
+  return overrides;
+}
+
 async function sendCloseWithRetry(contract, channelId, cumulativeAtomic, signature, {
   attempts = 7,
   backoffMs = [1500, 3000, 5000, 8000, 12000, 16000],
@@ -47,7 +68,8 @@ async function sendCloseWithRetry(contract, channelId, cumulativeAtomic, signatu
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const tx = await contract.close(channelId, cumulativeAtomic, signature);
+      const overrides = await buildCloseOverrides(contract, channelId, cumulativeAtomic, signature);
+      const tx = await contract.close(channelId, cumulativeAtomic, signature, overrides);
       return tx;
     } catch (error) {
       lastError = error;
@@ -156,6 +178,12 @@ export default async function handler(req, res) {
       final_signature: signature,
       final_voucher_cumulative_atomic: cumulativeAtomic,
       closed_via: 'platform-close',
+      agent_runtime: req.body?.agent_runtime || sessionMetadata.agent_runtime || null,
+      task: req.body?.task || sessionMetadata.task || null,
+      arc_fee_policy: {
+        max_fee_gwei: process.env.ARC_MAX_FEE_GWEI || '250',
+        priority_fee_gwei: process.env.ARC_PRIORITY_FEE_GWEI || '2',
+      },
       paid_to_platform_atomic: closed.paid_to_platform_atomic,
       refunded_to_agent_atomic: closed.refunded_to_agent_atomic,
     };
@@ -176,6 +204,11 @@ export default async function handler(req, res) {
       refunded_to_agent_usdc: refundedToAgent,
       cumulative_spent_usdc: Number(session.cumulative_spent || 0),
       calls_total: Number(session.calls_total || 0),
+      agent_runtime: metadata.agent_runtime,
+      task: metadata.task,
+      allowed_api_ids: metadata.allowed_api_ids || [],
+      max_calls: metadata.max_calls || null,
+      arc_fee_policy: metadata.arc_fee_policy,
       explorer: `https://testnet.arcscan.app/tx/${receipt.hash}`,
     };
 

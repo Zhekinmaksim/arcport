@@ -104,7 +104,84 @@ async function callGeminiInference(p) {
   };
 }
 
+function clampScore(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(1, n));
+}
+
+function analyzeSocialSignal(p = {}) {
+  const leader = String(p.leader || p.trader || 'unknown trader').trim();
+  const riskProfile = String(p.risk_profile || 'moderate').trim().toLowerCase();
+  const signals = Array.isArray(p.signals) && p.signals.length
+    ? p.signals.slice(0, 8)
+    : [{
+        asset: p.asset || 'BTC',
+        direction: p.direction || 'long',
+        confidence: p.confidence ?? 0.62,
+        win_rate: p.win_rate ?? 0.56,
+        drawdown_pct: p.drawdown_pct ?? 9,
+        source: p.source || 'manual signal',
+      }];
+
+  const scored = signals.map(signal => {
+    const confidence = clampScore(signal.confidence);
+    const winRate = clampScore(signal.win_rate);
+    const drawdown = Math.max(0, Number(signal.drawdown_pct || 0));
+    const volatilityPenalty = Math.min(0.35, drawdown / 100);
+    const riskAdjustment =
+      riskProfile.includes('conservative') ? -volatilityPenalty :
+      riskProfile.includes('aggressive') ? volatilityPenalty * 0.35 :
+      -volatilityPenalty * 0.45;
+    const score = Math.max(0, Math.min(1, (confidence * 0.45) + (winRate * 0.40) + riskAdjustment));
+
+    return {
+      asset: String(signal.asset || 'UNKNOWN').toUpperCase(),
+      direction: String(signal.direction || 'hold').toLowerCase(),
+      score: Number(score.toFixed(3)),
+      confidence,
+      win_rate: winRate,
+      drawdown_pct: drawdown,
+      source: signal.source || 'provided signal',
+    };
+  }).sort((a, b) => b.score - a.score);
+
+  const best = scored[0];
+  const action =
+    best.score >= 0.72 ? 'follow with capped allocation' :
+    best.score >= 0.55 ? 'watchlist only' :
+    'reject signal';
+  const maxAllocationPct =
+    action === 'follow with capped allocation'
+      ? (riskProfile.includes('aggressive') ? 8 : riskProfile.includes('conservative') ? 2 : 5)
+      : 0;
+
+  return {
+    rfb: 'RFB 06 - Social Trading Intelligence',
+    leader,
+    risk_profile: riskProfile,
+    decision: {
+      action,
+      selected_asset: best.asset,
+      selected_direction: best.direction,
+      signal_score: best.score,
+      max_allocation_pct: maxAllocationPct,
+    },
+    scored_signals: scored,
+    guardrails: [
+      'do not blindly mirror leaders',
+      'cap allocation by risk profile',
+      'reject signals with weak confidence or high drawdown',
+    ],
+    paid_runtime_note: 'Designed for repeated ArcPort session calls: one agent can evaluate multiple traders/signals under one bounded USDC budget.',
+    timestamp: new Date().toISOString(),
+  };
+}
+
 export const BUILTIN_APIS = {
+  'social-signal-1': async (p) => {
+    return analyzeSocialSignal(p);
+  },
   'weather-1': async (p) => {
     const city = p.city || 'Berlin';
     const geo = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`).then(r => r.json());

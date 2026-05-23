@@ -6,7 +6,11 @@ ArcPort V2 introduces session-based API payments for repeated agent usage.
 
 The marketplace also includes a paid `Gemini Inference` endpoint backed by Google AI Studio, so the same charge/session payment model can be shown against real model inference.
 
+For the Agora Agents Hackathon, ArcPort V3 is adapted to **RFB 06 — Social Trading Intelligence** through a paid `Social Signal Intelligence` endpoint. A social trading agent can open one bounded USDC session, evaluate repeated trader signals, optionally call Gemini for a decision memo, close once onchain, and refund unused budget.
+
 ArcPort is not a consumer app. The runtime user is the agent. The web app is an operator console for provisioning wallets, opening sessions, inspecting proof, and demonstrating the payment flow.
+
+V3 moves ArcPort toward a grant-ready agent runtime: the Wallet view now points operators to LI.FI/Jumper funding for Arc Testnet, session close uses explicit Arc fee settings, and the machine-facing session APIs now carry agent policy metadata for any external agent runtime. Hermes is one adapter, not the product boundary.
 
 Read the UI this way:
 
@@ -25,8 +29,11 @@ For the [Agentic Economy on Arc hackathon](https://lablab.ai/ai-hackathons/nano-
 Judge-facing docs:
 
 - [JUDGE_QUICKSTART.md](docs/JUDGE_QUICKSTART.md)
+- [GRANT_READINESS.md](docs/GRANT_READINESS.md)
+- [AGORA_BUILD_NOTES.md](docs/AGORA_BUILD_NOTES.md)
 - [hackathon-evidence/README.md](hackathon-evidence/README.md)
 - [VIDEO_SCRIPT.md](submission/VIDEO_SCRIPT.md)
+- [Hermes skill adapter](integrations/hermes-skill/SKILL.md)
 
 ## Charge vs Session
 
@@ -56,6 +63,39 @@ That split matters. The hackathon demo runs through the web control plane, but t
 
 The next step after this submission is not a larger web app. It is a more agent-native runtime surface: stable machine-facing API contracts, SDKs, and client adapters so agents can open sessions, spend against them, and close them without depending on the browser flow.
 
+V3 priorities:
+
+- **LI.FI onboarding in Wallet**: route USDC to the operator wallet on Arc Testnet before opening sessions.
+- **agent-first runtime demo**: an external agent opens a bounded session, makes paid calls, and closes with proof through ArcPort's session APIs. Hermes is the first local adapter.
+- **explicit Arc fee handling**: close transactions use a predictable fee policy via `ARC_MAX_FEE_GWEI` and `ARC_PRIORITY_FEE_GWEI`.
+- **Unified Balance later**: second-phase funding abstraction once the agent runtime is stable.
+- **Agora traction proof**: `/api/traction` exposes live sessions, paid calls, USDC volume, and refunds for hackathon updates.
+
+## Agora Agents Hackathon
+
+ArcPort V3 should be submitted under **RFB 06 — Social Trading Intelligence**:
+
+> ArcPort V3 is an agent-agnostic payment runtime for repeated paid API and model usage on Arc.
+
+It is not a copy-trading terminal by itself. It is the payment/runtime layer a social trading agent uses to buy signal intelligence, enforce budgets, and produce verifiable receipts.
+
+For the Canteen-hosted Arc RPC:
+
+```bash
+uv tool install git+https://github.com/the-canteen-dev/ARC-cli.git
+arc-canteen login
+arc-canteen rpc eth_chainId
+arc-canteen rpc-url --export
+```
+
+Set either `CANTEEN_ARC_RPC` or `ARC_RPC` to the Canteen RPC URL. ArcPort reads `CANTEEN_ARC_RPC` first, then `ARC_RPC`, then falls back to the public Arc testnet RPC.
+
+Live traction endpoint:
+
+```text
+https://arcport.xyz/api/traction
+```
+
 ## How An Agent Integrates
 
 The browser demo is only the control plane.
@@ -67,6 +107,16 @@ The machine-facing path is simple:
 3. `POST /api/session-close`
 
 That is the runtime surface the agent uses. The web app is there to provision wallets, inspect usage, and verify proof.
+
+Example external-agent smoke test using Hermes:
+
+```bash
+export ARCPORT_URL=https://arcport.xyz
+export ARCPORT_IDENTITY_KEY=awi_...
+hermes chat -s arcport-hermes --toolsets "terminal,skills"
+```
+
+Ask the agent to open an ArcPort session, make three paid Gemini calls, close the session, and summarize the open tx, close tx, calls total, cumulative spend, and refund.
 
 ## Charge Mode
 

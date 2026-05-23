@@ -178,6 +178,44 @@ Use a 16:9 frame from the deck or video where the viewer can read:
 9. Open Proof Mode.
 10. Show open tx, close tx, calls total, cumulative spent, refund, and channel status.
 
+## Agora Agents Hackathon Copy
+
+Use this version for Canteen / Agora forms.
+
+### Short Description
+
+ArcPort V3 is a session-based payment runtime for RFB 06 social trading agents. Agents get a bounded USDC budget, evaluate repeated trader signals through paid API/model calls, close once onchain, refund unused balance, and produce verifiable proof.
+
+### Long Description
+
+ArcPort V3 is payment infrastructure for **RFB 06 — Social Trading Intelligence** agents on Arc.
+
+It is not a copy-trading terminal by itself. It is the runtime payment layer a social trading agent needs when it buys trader data, scores signals, calls models, executes tasks under strict budgets, and leaves auditable receipts.
+
+The core primitive is session mode. An operator funds a Circle wallet with USDC on Arc. An external social trading agent receives a bounded task budget with policy fields such as runtime, task, allowed APIs, and max calls. The agent opens one session onchain, makes repeated paid Social Signal Intelligence or Gemini calls through signed offchain vouchers, then closes once onchain. ArcPort records cumulative spend and refunds unused USDC.
+
+This matters for Agora because social trading agents need to evaluate many traders and signals quickly without unlimited wallet access. If every `$0.001` signal or model call required its own settlement path, the economics and UX break. ArcPort keeps the payment lifecycle verifiable while allowing repeated agent usage to happen at machine speed.
+
+The browser is the control plane for operators and judges. The runtime user is the external agent calling `/api/session-open`, `/api/session-call`, `/api/session-close`, and `/api/session-proof`. Proof Mode shows open tx, close tx, calls total, cumulative spend, refund, channel status, and Arcscan links.
+
+ArcPort uses USDC, Circle Wallets, Gateway/Nanopayments, Arc settlement, a Solidity session contract, Social Signal Intelligence as an RFB 06 paid endpoint, Google AI Studio/Gemini as a paid model endpoint, Vercel Functions, and Supabase.
+
+### Agora Positioning
+
+ArcPort V3 is submitted under RFB 06 — Social Trading Intelligence.
+
+Social trading agents need paid signal intelligence and paid inference. ArcPort gives them bounded budgets, policy enforcement, session accounting, refund logic, and proof.
+
+### Agora Traction Source
+
+Use:
+
+```text
+https://arcport.xyz/api/traction
+```
+
+This endpoint reports sessions, paid calls, USDC volume, refunds, and external-agent session count for hackathon updates.
+
 ## Differentiation
 
 Do not frame ArcPort as just another marketplace.

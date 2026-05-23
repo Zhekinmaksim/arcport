@@ -13,7 +13,7 @@
 import { execSync } from 'node:child_process';
 import { ethers } from 'ethers';
 
-const ARC_RPC = 'https://rpc.testnet.arc.network';
+const ARC_RPC = process.env.CANTEEN_ARC_RPC || process.env.ARC_RPC || 'https://rpc.testnet.arc.network';
 const ARC_CHAIN_ID = 5042002;
 const USDC_ADDRESS = '0x3600000000000000000000000000000000000000';
 const CONTRACT_PATH = 'contracts/ArcStreamChannel.sol';

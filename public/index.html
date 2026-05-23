@@ -374,7 +374,48 @@ tbody td { padding: 11px 16px; font-size: 12.5px; vertical-align: middle; }
   outline: none;
   transition: border-color 0.12s, box-shadow 0.12s;
 }
+.field select {
+  width: 100%;
+  min-height: 37px;
+  padding-right: 38px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--bg2);
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 5.25L7 8.75L10.5 5.25' stroke='%238b93aa' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px 14px;
+}
+.field select:hover {
+  border-color: rgba(99,130,255,0.26);
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 5.25L7 8.75L10.5 5.25' stroke='%23a9b8ff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.field select:focus {
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 14 14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3.5 5.25L7 8.75L10.5 5.25' stroke='%234b8bff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.field select::-ms-expand { display: none; }
 .field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--blue-b);
+  box-shadow: 0 0 0 3px rgba(75,139,255,0.07);
+}
+.proof-lookup-input {
+  flex: 1;
+  min-width: 220px;
+  height: 36px;
+  border: 1px solid var(--b1);
+  background: var(--bg2);
+  color: var(--t1);
+  border-radius: 10px;
+  padding: 0 12px;
+  outline: none;
+}
+.proof-lookup-input:focus {
   border-color: var(--blue-b);
   box-shadow: 0 0 0 3px rgba(75,139,255,0.07);
 }
@@ -1225,12 +1266,17 @@ const S = {
   balance: 0,
   balanceLoading: false,
   sessionAction: null,
+  proofLookupLoading: false,
+  proofLookupChannel: '',
+  traction: null,
+  tractionLoading: false,
   txs: (() => {
     try { return JSON.parse(localStorage.getItem('ap_txs') || '[]'); }
     catch (_) { return []; }
   })(),
   webhooks: [], myApis: [],
   apis: [
+    { id:'social-signal-1', name:'Social Signal Intelligence', cat:'Finance', calls:0, rev:0, ep:'arcport.xyz/rfb06/signal-intel', desc:'RFB 06 demo endpoint. Score trader signals, apply risk limits, and return a copy/no-copy decision paid through ArcPort.', ex:'{"leader":"HL Whale Alpha","risk_profile":"moderate","signals":[{"asset":"BTC","direction":"long","confidence":0.74,"win_rate":0.62,"drawdown_pct":8,"source":"leaderboard"},{"asset":"SOL","direction":"long","confidence":0.58,"win_rate":0.51,"drawdown_pct":18,"source":"social"}]}', hint:'RFB 06: trader signal scoring, allocation caps, copy/no-copy decision' },
     { id:'gemini-1',    name:'Gemini Inference',cat:'AI',      calls:0, rev:0, ep:'generativelanguage.googleapis.com', desc:'Prompt Gemini through Google AI Studio and pay per inference. Useful for agent reasoning, rewriting, and extraction.', ex:'{"prompt":"Summarize why session-based API payments matter for agents in 3 bullet points."}', hint:'Try: summarize, rewrite, extract, classify' },
     { id:'weather-1',   name:'Weather Pro',   cat:'Data',    calls:0, rev:0, ep:'open-meteo.com',                desc:'Weather data for any city. Returns temperature, humidity, and wind speed in under 200ms.',    ex:'{"city":"Berlin"}',                               hint:'Try: Berlin, Tokyo, New York' },
     { id:'fx-1',        name:'FX Rates',       cat:'Finance', calls:0, rev:0, ep:'frankfurter.app',               desc:'Live FX rates from ECB. 30+ stablecoin-compatible currency pairs, updated daily.',      ex:'{"base":"USD","currencies":"EUR,GBP,JPY"}',        hint:'Bases: USD EUR GBP JPY' },
@@ -1271,9 +1317,53 @@ const hasAnySession = () => !!S.activeSession;
 const isSessionOpening = () => S.sessionAction === 'opening';
 const isSessionClosing = () => S.sessionAction === 'closing';
 const isSessionBusy = () => !!S.sessionAction;
+const ARC_CHAIN_ID = 5042002;
+const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000';
 
 function sessionBudgetCalls(session) {
   return Math.round(Number(session?.deposit_usdc || 0) / 0.001);
+}
+
+function normalizeAgentRuntime(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return 'External agent';
+  return raw.toLowerCase() === 'hermes' ? 'Hermes' : raw;
+}
+
+function formatAllowedApis(ids = []) {
+  const list = Array.isArray(ids) ? ids : [];
+  if (!list.length) return 'Any registered API';
+  const all = [...S.apis, ...S.myApis];
+  return list
+    .map(id => all.find(api => api.id === id)?.name || id)
+    .join(', ');
+}
+
+function renderAgentPolicyLines(policy = {}) {
+  const allowed = policy.allowed_api_ids || [];
+  return `
+    <div class="pay-line"><span>Runtime</span><span>${normalizeAgentRuntime(policy.agent_runtime)}</span></div>
+    <div class="pay-line"><span>Task</span><span title="${escapeHtml(policy.task || '')}">${policy.task ? escapeHtml(shortRef(policy.task)) : 'Bounded API usage'}</span></div>
+    <div class="pay-line"><span>Allowed APIs</span><span title="${escapeHtml(formatAllowedApis(allowed))}">${escapeHtml(shortRef(formatAllowedApis(allowed)))}</span></div>
+    <div class="pay-line"><span>Max calls</span><span>${policy.max_calls || '-'}</span></div>
+  `;
+}
+
+function lifiFundingUrl() {
+  const params = new URLSearchParams({
+    toChain: String(ARC_CHAIN_ID),
+    toToken: ARC_USDC_ADDRESS,
+    integrator: 'arcport',
+  });
+  if (S.addr) params.set('toAddress', S.addr);
+  return `https://jumper.exchange/?${params.toString()}`;
+}
+
+function openFundingRoute(source = 'lifi') {
+  const url = source === 'faucet'
+    ? 'https://faucet.circle.com'
+    : lifiFundingUrl();
+  window.open(url, '_blank');
 }
 
 function sessionStatusText(status) {
@@ -1375,6 +1465,34 @@ function renderCompareCard() {
     </div>`;
 }
 
+function renderAgoraTractionPanel() {
+  const m = S.traction?.metrics || {};
+  const cards = [
+    { l: 'SESSIONS', v: m.session_count ?? '-', s: `${m.closed_session_count ?? 0} closed` },
+    { l: 'PAID CALLS', v: m.total_paid_call_count ?? '-', s: `${m.session_call_count ?? 0} session calls` },
+    { l: 'USDC VOLUME', v: m.total_volume_usdc !== undefined ? fmtU(m.total_volume_usdc) : '-', s: 'charge + session' },
+    { l: 'REFUNDED', v: m.refunded_usdc !== undefined ? fmtU(m.refunded_usdc) : '-', s: 'unused budgets' },
+  ];
+
+  return `
+    <div class="proof-card span-2">
+      <div class="proof-card-head">
+        <div class="proof-card-title">Agora traction</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadTraction(true)" ${S.tractionLoading ? 'disabled' : ''}>${S.tractionLoading ? 'Refreshing...' : 'Refresh'}</button>
+      </div>
+      <div class="proof-sub" style="margin-bottom:12px">Live product metrics for the hackathon submission: agent sessions, paid calls, USDC volume, and refunds.</div>
+      <div class="proof-kpis" style="grid-template-columns:repeat(4,1fr)">
+        ${cards.map(card => `
+          <div class="proof-kpi">
+            <div class="proof-kpi-label">${card.l}</div>
+            <div class="proof-kpi-value">${card.v}</div>
+            <div class="proof-kpi-sub">${card.s}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
 function recordActivity(entry) {
   S.txs.unshift({ ts: now(), ...entry });
   S.txs = S.txs.slice(0, 60);
@@ -1422,7 +1540,60 @@ function getSessionProofSurface() {
     cumulative_usdc: last?.cumulative_usdc ?? session?.spent_usdc ?? 0,
     session_deposit_usdc: session?.deposit_usdc ?? 0,
     session_expires_at: session?.expires_at || '',
+    agent_runtime: last?.agent_runtime || session?.agent_runtime || 'External agent',
+    task: last?.task || session?.task || '',
+    allowed_api_ids: last?.allowed_api_ids || session?.allowed_api_ids || [],
+    max_calls: last?.max_calls || session?.max_calls || '',
   };
+}
+
+function sessionProofResponseToState(d) {
+  return {
+    mode: 'session',
+    api_id: '',
+    api_name: '',
+    amount: 0.001,
+    response: null,
+    note: 'Loaded from session proof API',
+    at: new Date().toISOString(),
+    payee: '',
+    payer: d.agent_arc_address || S.addr || '',
+    total_ms: 0,
+    finality_ms: 0,
+    session_channel_id: d.channel_id,
+    session_contract: d.contract_address,
+    session_open_tx_hash: d.open_tx_hash || null,
+    session_close_tx_hash: d.close_tx_hash || null,
+    session_refund_usdc: d.refunded_to_agent_usdc,
+    session_paid_to_platform_usdc: d.paid_to_platform_usdc,
+    session_status: d.status || 'open',
+    session_calls_total: d.calls_total || 0,
+    session_remaining_usdc: d.remaining_usdc || 0,
+    cumulative_atomic: d.cumulative_atomic || '0',
+    cumulative_usdc: d.cumulative_usdc || 0,
+    agent_runtime: d.agent_runtime || 'External agent',
+    task: d.task || '',
+    allowed_api_ids: d.allowed_api_ids || [],
+    max_calls: d.max_calls || '',
+  };
+}
+
+function renderProofLookupPanel(sessionProof) {
+  const current = S.proofLookupChannel || sessionProof?.session_channel_id || '';
+  return `
+    <div class="subtle-panel mb16">
+      <div class="row-between" style="gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px">
+          <div class="mono" style="font-size:9px;color:var(--blue2);letter-spacing:0.1em;margin-bottom:6px">EXTERNAL AGENT PROOF</div>
+          <div class="c3 f12" style="line-height:1.5">Paste a channel ID from any agent runtime to load the bounded session policy, spend, refund, and Arcscan proof into this control plane.</div>
+        </div>
+        <div class="row g8" style="flex:1.2;min-width:320px">
+          <input id="proof-channel-input" class="proof-lookup-input mono" placeholder="0x... channel id" value="${escapeHtml(current)}" oninput="S.proofLookupChannel=this.value.trim()" />
+          <button class="btn btn-secondary btn-sm" onclick="loadSessionProofByChannel()" ${S.proofLookupLoading ? 'disabled' : ''}>${S.proofLookupLoading ? 'Loading...' : 'Load proof'}</button>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderActivityRow(tx, variant = 'wallet') {
@@ -1516,7 +1687,7 @@ function nav(page) {
   $('hdr-page').textContent = page === 'myapis' ? 'my-apis' : page;
   if (page === 'marketplace') renderMarket();
   if (page === 'playground')  renderPlayground();
-  if (page === 'proof')       renderProof();
+  if (page === 'proof')       { renderProof(); loadTraction(); }
   if (page === 'wallet')      renderWallet();
   if (page === 'webhooks')    loadWebhooks();
   if (page === 'myapis')      renderMyApis();
@@ -1717,6 +1888,10 @@ function renderPlaygroundMode() {
               <div class="flow-metric-value">${fmtU(isClosed ? (session?.refunded_to_agent_usdc || 0) : (session?.remaining_usdc || 0))}</div>
             </div>
           </div>
+          <div class="subtle-panel" style="margin-bottom:10px">
+            <div class="mono" style="font-size:9px;color:var(--blue2);letter-spacing:0.1em;margin-bottom:6px">AGENT POLICY</div>
+            ${renderAgentPolicyLines(session)}
+          </div>
         ` : ''}
 
         ${!hasAnySession() ? `
@@ -1810,6 +1985,7 @@ function renderProof() {
     const refundValue = sessionProof.session_refund_usdc !== undefined ? `${fmtU(sessionProof.session_refund_usdc)} USDC` : '-';
     const remainingValue = `${fmtU(sessionProof.session_remaining_usdc || 0)} USDC`;
     c.innerHTML = `
+      ${renderProofLookupPanel(sessionProof)}
       <div class="proof-hero mb16">
         <div class="proof-label">SESSION PROOF</div>
         <div class="proof-title">Open once onchain, sign repeated calls offchain, close once onchain</div>
@@ -1908,7 +2084,33 @@ function renderProof() {
           </div>
         </div>
 
+        <div class="proof-card">
+          <div class="proof-card-head">
+            <div class="proof-card-title">Agent policy</div>
+            <span class="chip ch-blue">BOUNDED BUDGET</span>
+          </div>
+          <div class="proof-lines">
+            <div class="proof-line">
+              <div class="proof-line-label">Runtime</div>
+              <div class="proof-line-value">${normalizeAgentRuntime(sessionProof.agent_runtime)}</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Task</div>
+              <div class="proof-line-value">${sessionProof.task ? escapeHtml(sessionProof.task) : 'Bounded repeated API usage'}</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Allowed APIs</div>
+              <div class="proof-line-value">${escapeHtml(formatAllowedApis(sessionProof.allowed_api_ids))}</div>
+            </div>
+            <div class="proof-line">
+              <div class="proof-line-label">Max calls</div>
+              <div class="proof-line-value mono">${sessionProof.max_calls || '-'}</div>
+            </div>
+          </div>
+        </div>
+
         ${renderCompareCard()}
+        ${renderAgoraTractionPanel()}
 
         <div class="proof-card span-2">
           <div class="proof-card-head">
@@ -1922,6 +2124,7 @@ function renderProof() {
   }
 
   c.innerHTML = `
+    ${renderProofLookupPanel(sessionProof)}
     <div class="proof-hero mb16">
       <div class="proof-label">CHARGE PROOF</div>
       <div class="proof-title">One-off paid call through Circle Nanopayments</div>
@@ -2001,6 +2204,7 @@ function renderProof() {
         </div>
 
       ${renderCompareCard()}
+      ${renderAgoraTractionPanel()}
 
       <div class="proof-card span-2">
         <div class="proof-card-head">
@@ -2026,7 +2230,7 @@ function updateCodeSnippet() {
   const id = $('play-api') ? $('play-api').value : 'weather-1';
   const rawParams = ($('play-params')?.value || '{\n  "city": "Berlin"\n}').trim();
   if (S.paymentMode === 'session') {
-    c.textContent = `// Open one onchain channel\nconst open = await post('/api/session-open', {\n  deposit_usdc: 0.01,\n})\n\n// Make repeated offchain-paid calls\nconst res = await post('/api/session-call', {\n  channel_id: open.channel_id,\n  api_id: '${id}',\n  params: ${rawParams},\n})\n\n// Close once and refund the unused balance\nconst close = await post('/api/session-close', {\n  channel_id: open.channel_id,\n})`;
+    c.textContent = `// Open one bounded onchain session\nconst open = await post('/api/session-open', {\n  deposit_usdc: 0.01,\n  max_calls: 10,\n  agent_runtime: 'External agent',\n  task: 'RFB 06 social trading signal analysis'\n})\n\n// Make repeated offchain-paid calls\nconst res = await post('/api/session-call', {\n  channel_id: open.channel_id,\n  api_id: '${id}',\n  params: ${rawParams},\n})\n\n// Close once and refund the unused balance\nconst close = await post('/api/session-close', {\n  channel_id: open.channel_id,\n})`;
     return;
   }
   c.textContent = `// Ask ArcPort for payment requirements\nawait post('/api/pay-and-call', {\n  api_id: '${id}',\n  params: ${rawParams},\n})\n\n// Sign one gas-free X-Payment payload\nconst { x_payment } = await post('/api/x-payment', {\n  api_id: '${id}',\n})\n\n// Retry with X-Payment and unlock the response\nconst res = await post('/api/pay-and-call', {\n  api_id: '${id}',\n  params: ${rawParams},\n}, { 'X-Payment': x_payment })`;
@@ -2083,6 +2287,60 @@ async function fetchJsonWithIdempotencyRetry(url, options = {}, {
       }
       await new Promise(resolve => setTimeout(resolve, Math.min(backoffMs * attempt, 2500)));
     }
+  }
+}
+
+async function loadSessionProofByChannel() {
+  const input = $('proof-channel-input');
+  const channelId = (input?.value || S.proofLookupChannel || '').trim();
+  if (!S.identityKey) {
+    toast('Create or restore a wallet identity first', 'warn');
+    return;
+  }
+  if (!channelId) {
+    toast('Paste a session channel ID first', 'warn');
+    return;
+  }
+
+  S.proofLookupChannel = channelId;
+  S.proofLookupLoading = true;
+  renderProof();
+  try {
+    const response = await fetch(`/api/session-proof?channel_id=${encodeURIComponent(channelId)}`, {
+      headers: { 'Authorization': 'Bearer ' + S.identityKey },
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Failed to load session proof');
+
+    S.lastProof = sessionProofResponseToState(data);
+    saveProofState();
+    addLog('info', 'Loaded external agent session proof: ' + shortRef(channelId));
+    toast('Session proof loaded');
+  } catch (e) {
+    addLog('err', e.message);
+    toast('Proof lookup failed', 'err');
+  } finally {
+    S.proofLookupLoading = false;
+    renderProof();
+  }
+}
+
+async function loadTraction(force = false) {
+  if (S.tractionLoading) return;
+  if (S.traction && !force) return;
+
+  S.tractionLoading = true;
+  if (S.page === 'proof') renderProof();
+  try {
+    const response = await fetch('/api/traction');
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Failed to load traction metrics');
+    S.traction = data;
+  } catch (e) {
+    addLog('warn', 'Traction metrics unavailable: ' + e.message);
+  } finally {
+    S.tractionLoading = false;
+    if (S.page === 'proof') renderProof();
   }
 }
 
@@ -2274,6 +2532,10 @@ async function runSessionCall(key, api, params) {
       calls_total: j.session.calls_total,
       remaining_calls: j.session.remaining_calls,
       expires_at: j.session.expires_at,
+      agent_runtime: j.session.agent_runtime || S.activeSession.agent_runtime || 'External agent',
+      task: j.session.task || S.activeSession.task || '',
+      allowed_api_ids: j.session.allowed_api_ids || S.activeSession.allowed_api_ids || [],
+      max_calls: j.session.max_calls || S.activeSession.max_calls || '',
       last_signature: j.voucher.signature,
       last_signer: j.voucher.signer,
       last_api_id: api.id,
@@ -2305,6 +2567,10 @@ async function runSessionCall(key, api, params) {
       cumulative_usdc: j.voucher.cumulative_usdc,
       session_calls_total: j.session.calls_total,
       session_remaining_usdc: j.session.remaining_usdc,
+      agent_runtime: j.session.agent_runtime || S.activeSession.agent_runtime || 'External agent',
+      task: j.session.task || S.activeSession.task || '',
+      allowed_api_ids: j.session.allowed_api_ids || S.activeSession.allowed_api_ids || [],
+      max_calls: j.session.max_calls || S.activeSession.max_calls || '',
       payee: j.payment?.payee?.arc_address || '',
       payer: S.addr || '',
       finality_ms: Math.max(0, totalMs - Number(j.api?.latency_ms || 0)),
@@ -2407,6 +2673,14 @@ function renderWallet() {
             Refund = unused session funds returned on close.
           </div>
         </div>
+        <div class="subtle-panel" style="margin-bottom:12px">
+          <div class="mono" style="font-size:9px;color:var(--blue2);letter-spacing:0.1em;margin-bottom:6px">FUNDING</div>
+          <div class="c3 f12" style="line-height:1.6;margin-bottom:10px">Route USDC to this operator wallet on Arc Testnet. Session mode spends wallet balance; Gateway balance is only for one-off charge mode.</div>
+          <div class="wallet-action-grid-2">
+            <button class="btn btn-primary btn-sm" onclick="openFundingRoute('lifi')">Fund via LI.FI</button>
+            <button class="btn btn-secondary btn-sm" onclick="openFundingRoute('faucet')">Arc faucet</button>
+          </div>
+        </div>
         ${isCircle ? `
         <div class="subtle-panel" style="margin-bottom:12px">
           <div class="mono" style="font-size:9px;color:var(--t2);letter-spacing:0.1em;margin-bottom:6px">GATEWAY BALANCE</div>
@@ -2436,6 +2710,10 @@ function renderWallet() {
             <div class="pay-line"><span>${S.activeSession.status === 'closed' ? 'Unused balance returned' : 'Remaining budget'}</span><span class="${S.activeSession.status === 'closed' ? 'c-blue' : 'c-grn'}">${fmtU(S.activeSession.status === 'closed' ? (S.activeSession.refunded_to_agent_usdc || 0) : (S.activeSession.remaining_usdc || 0))} USDC</span></div>
             <div class="pay-line"><span>Calls</span><span>${S.activeSession.calls_total || 0} / ${Math.round(Number(S.activeSession.deposit_usdc || 0) / 0.001)}</span></div>
             <div class="pay-line"><span>Expiry</span><span class="mono">${new Date(S.activeSession.expires_at).toLocaleTimeString('en', { hour12:false, hour:'2-digit', minute:'2-digit' })}</span></div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--b1)">
+              <div class="mono" style="font-size:9px;color:var(--blue2);letter-spacing:0.1em;margin-bottom:6px">AGENT POLICY</div>
+              ${renderAgentPolicyLines(S.activeSession)}
+            </div>
             ${S.activeSession.status === 'closed'
               ? `
                 <button class="btn btn-primary btn-block mt12" onclick="openSession('0.01')" ${sessionBusy ? 'disabled' : ''}>${opening ? 'Opening session onchain...' : 'Open 10-call session'}</button>
@@ -2463,10 +2741,10 @@ function renderWallet() {
             </div>
           `}
         </div>` : ''}
-        <button class="btn btn-primary btn-block" onclick="window.open('https://faucet.circle.com','_blank')">
+        <button class="btn btn-primary btn-block" onclick="openFundingRoute('lifi')">
           Fund wallet on Arc Testnet &rarr;
         </button>
-        <p class="c3 f12 mono" style="text-align:center;margin-top:8px">${isCircle ? 'Fund wallet → session uses wallet balance; Gateway is charge mode' : 'faucet.circle.com  →  Arc Testnet  →  fund wallet'}</p>
+        <p class="c3 f12 mono" style="text-align:center;margin-top:8px">${isCircle ? 'LI.FI route → wallet balance → session budget' : 'create wallet → fund on Arc Testnet → run paid calls'}</p>
       </div>
     </div>` : `
     <div class="card" style="border-color:var(--blue-b)">
@@ -2505,7 +2783,7 @@ function renderWallet() {
         <div class="divider"></div>
         <div class="steps">
           <div class="step"><div class="step-num">1</div><div class="step-text">Create wallet (EOA for compatibility, Circle for ArcPort V2)</div></div>
-          <div class="step"><div class="step-num">2</div><div class="step-text">Fund the Circle wallet at faucet.circle.com on Arc Testnet</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Fund the Circle wallet on Arc Testnet through LI.FI or the faucet</div></div>
           <div class="step"><div class="step-num">3</div><div class="step-text">For charge mode, deposit to Gateway. For session mode, keep enough USDC in the wallet.</div></div>
         </div>
       </div>
@@ -2706,7 +2984,13 @@ async function openSession(amount = '0.01') {
         'Content-Type': 'application/json',
         'X-Idempotency-Key': requestKey,
       },
-      body: JSON.stringify({ deposit_usdc: Number(amount) }),
+      body: JSON.stringify({
+        deposit_usdc: Number(amount),
+        expected_calls: 10,
+        max_calls: 10,
+        agent_runtime: 'Browser control plane',
+        task: 'RFB 06 social trading signal analysis',
+      }),
     }, {
       retryLabel: 'Transient local runtime failure during session open. Retrying with the same request id...',
       pendingLabel: 'The previous session open request is still processing. Waiting for the same request id...',
@@ -2727,6 +3011,10 @@ async function openSession(amount = '0.01') {
       remaining_usdc: d.deposit_usdc,
       calls_total: 0,
       remaining_calls: d.expected_calls,
+      agent_runtime: d.agent_runtime || 'Browser control plane',
+      task: d.task || 'RFB 06 social trading signal analysis',
+      allowed_api_ids: d.allowed_api_ids || [],
+      max_calls: d.max_calls || d.expected_calls,
       approve_tx_hash: d.approve_tx_hash || null,
       open_tx_hash: d.open_tx_hash,
       close_tx_hash: null,
@@ -2747,6 +3035,10 @@ async function openSession(amount = '0.01') {
       cumulative_usdc: 0,
       session_calls_total: 0,
       session_remaining_usdc: d.deposit_usdc,
+      agent_runtime: d.agent_runtime || 'Browser control plane',
+      task: d.task || 'RFB 06 social trading signal analysis',
+      allowed_api_ids: d.allowed_api_ids || [],
+      max_calls: d.max_calls || d.expected_calls,
       session_refund_usdc: undefined,
       session_paid_to_platform_usdc: undefined,
       session_status: 'open',
@@ -2827,6 +3119,10 @@ async function closeSession() {
       close_tx_hash: d.close_tx_hash,
       paid_to_platform_usdc: d.paid_to_platform_usdc,
       refunded_to_agent_usdc: d.refunded_to_agent_usdc,
+      agent_runtime: d.agent_runtime || S.activeSession.agent_runtime || 'External agent',
+      task: d.task || S.activeSession.task || '',
+      allowed_api_ids: d.allowed_api_ids || S.activeSession.allowed_api_ids || [],
+      max_calls: d.max_calls || S.activeSession.max_calls || '',
       closed_at: new Date().toISOString(),
     };
     S.balance = +(S.balance + Number(d.refunded_to_agent_usdc || 0)).toFixed(3);
@@ -2839,6 +3135,10 @@ async function closeSession() {
       S.lastProof.session_calls_total = d.calls_total;
       S.lastProof.session_remaining_usdc = 0;
       S.lastProof.cumulative_usdc = d.cumulative_spent_usdc;
+      S.lastProof.agent_runtime = d.agent_runtime || S.activeSession.agent_runtime || S.lastProof.agent_runtime || 'External agent';
+      S.lastProof.task = d.task || S.activeSession.task || S.lastProof.task || '';
+      S.lastProof.allowed_api_ids = d.allowed_api_ids || S.activeSession.allowed_api_ids || S.lastProof.allowed_api_ids || [];
+      S.lastProof.max_calls = d.max_calls || S.activeSession.max_calls || S.lastProof.max_calls || '';
     }
 
     saveSessionState();

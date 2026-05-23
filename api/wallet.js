@@ -12,7 +12,7 @@ import {
 } from './_wallet-identity.js';
 import { createDeveloperWallet } from './_circle.js';
 
-const ARC_RPC      = 'https://rpc.testnet.arc.network';
+const ARC_RPC      = process.env.CANTEEN_ARC_RPC || process.env.ARC_RPC || 'https://rpc.testnet.arc.network';
 const USDC_ADDRESS = '0x3600000000000000000000000000000000000000';
 const ARC_CHAIN_ID = 5042002;
 const sbH = () => ({

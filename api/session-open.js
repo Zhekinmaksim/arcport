@@ -107,6 +107,14 @@ export default async function handler(req, res) {
       depositUsdc: req.body?.deposit_usdc,
       expectedCalls: req.body?.expected_calls,
     });
+    const allowedApiIds = Array.isArray(req.body?.allowed_api_ids)
+      ? req.body.allowed_api_ids.map(value => String(value)).filter(Boolean).slice(0, 20)
+      : [];
+    const maxCalls = Number.isFinite(Number(req.body?.max_calls))
+      ? Math.max(1, Math.floor(Number(req.body.max_calls)))
+      : deposit.expected_calls;
+    const agentRuntime = req.body?.agent_runtime ? String(req.body.agent_runtime).slice(0, 80) : null;
+    const task = req.body?.task ? String(req.body.task).slice(0, 240) : null;
     const walletBalanceAtomic = await getUsdcBalanceAtomic(wallet.arc_address);
     const requiredAtomic = BigInt(deposit.deposit_atomic) + BigInt(SESSION_OPEN_BUFFER_ATOMIC);
     if (walletBalanceAtomic < requiredAtomic) {
@@ -200,6 +208,10 @@ export default async function handler(req, res) {
       metadata: {
         mode: 'session',
         expected_calls: deposit.expected_calls,
+        max_calls: maxCalls,
+        allowed_api_ids: allowedApiIds,
+        agent_runtime: agentRuntime,
+        task,
       },
     };
 
@@ -219,6 +231,10 @@ export default async function handler(req, res) {
       deposit_usdc: deposit.deposit_usdc,
       deposit_atomic: deposit.deposit_atomic,
       expected_calls: deposit.expected_calls,
+      max_calls: maxCalls,
+      allowed_api_ids: allowedApiIds,
+      agent_runtime: agentRuntime,
+      task,
       approve_tx_hash: approveTx?.txHash || null,
       open_tx_hash: openTx.txHash,
       expires_at: new Date(opened.expiry_unix * 1000).toISOString(),

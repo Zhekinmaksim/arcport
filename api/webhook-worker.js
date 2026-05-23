@@ -5,7 +5,7 @@
 import { ethers } from 'ethers';
 import { createHmac } from 'crypto';
 
-const ARC_RPC      = 'https://rpc.testnet.arc.network';
+const ARC_RPC      = process.env.CANTEEN_ARC_RPC || process.env.ARC_RPC || 'https://rpc.testnet.arc.network';
 const ARC_CHAIN_ID = 5042002;
 const USDC_ADDRESS = '0x3600000000000000000000000000000000000000';
 const TRANSFER_ABI = ['event Transfer(address indexed from, address indexed to, uint256 value)'];

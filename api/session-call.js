@@ -80,6 +80,25 @@ export default async function handler(req, res) {
     if (session.status !== 'open') {
       return res.status(400).json({ error: `Channel is not open: ${session.status}` });
     }
+    const sessionMetadata = session.metadata && typeof session.metadata === 'object' ? session.metadata : {};
+    const allowedApiIds = Array.isArray(sessionMetadata.allowed_api_ids) ? sessionMetadata.allowed_api_ids : [];
+    if (allowedApiIds.length && !allowedApiIds.includes(api_id)) {
+      return res.status(403).json({
+        error: 'API is not allowed by this session policy',
+        channel_id,
+        api_id,
+        allowed_api_ids: allowedApiIds,
+      });
+    }
+    const maxCalls = Number(sessionMetadata.max_calls || 0);
+    if (maxCalls > 0 && Number(session.calls_total || 0) >= maxCalls) {
+      return res.status(402).json({
+        error: 'Session call limit reached',
+        channel_id,
+        calls_total: Number(session.calls_total || 0),
+        max_calls: maxCalls,
+      });
+    }
 
     const contractAddress = session.contract_address;
     const onchain = await getOnchainChannel(channel_id, contractAddress);
@@ -140,10 +159,11 @@ export default async function handler(req, res) {
 
     const nextSpent = Number(nextAtomic) / 1e6;
     const nextCalls = Number(session.calls_total || 0) + 1;
-    const sessionMetadata = session.metadata && typeof session.metadata === 'object' ? session.metadata : {};
     const payee = process.env.PLATFORM_ARC_ADDRESS || null;
     const metadata = {
       ...sessionMetadata,
+      agent_runtime: req.body?.agent_runtime || sessionMetadata.agent_runtime || null,
+      task: req.body?.task || sessionMetadata.task || null,
       last_api_id: api_id,
       last_signature: signature,
       last_response_at: new Date().toISOString(),
@@ -205,6 +225,10 @@ export default async function handler(req, res) {
         calls_total: nextCalls,
         remaining_calls: Math.max(0, Math.floor((Number(session.deposit_amount) - nextSpent) / 0.001)),
         expires_at: session.expires_at,
+        agent_runtime: metadata.agent_runtime,
+        task: metadata.task,
+        allowed_api_ids: metadata.allowed_api_ids || [],
+        max_calls: metadata.max_calls || null,
       },
       data,
     };

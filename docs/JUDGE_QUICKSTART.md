@@ -5,7 +5,7 @@ Demo time: about 60 seconds
 
 ArcPort V2 introduces session-based API payments for repeated agent usage.
 
-The browser is only the control plane in this demo. The runtime user is the agent.
+The browser is only the control plane in this demo. The runtime user is the external agent.
 
 Prerequisite: use a prepared Circle wallet funded with at least `0.01 USDC` on Arc Testnet.
 
@@ -28,18 +28,20 @@ What this proves:
 
 ### 2. Make 3 calls in `Playground`
 
-Switch to **Session mode**, select **Gemini Inference**, and run **3 paid prompts**:
+Switch to **Session mode**, select **Social Signal Intelligence**, and run **3 paid signal evaluations**:
 
-- one short bullet answer
-- one one-line rewrite
-- one short JSON response
+- one BTC leader signal
+- one SOL leader signal
+- one higher-risk signal that should be capped or rejected
 
 What this proves:
 
 - usage is authorized through signed offchain calls
 - calls accrue against one session
 - the product supports repeated machine usage, not just one-off billing
-- the same payment model works against real model inference, not only data APIs
+- the same payment model works for RFB 06 social trading intelligence
+
+Optional: run one **Gemini Inference** call after the signal evaluations to generate a short decision memo.
 
 ### 3. Close the session in `Wallet`
 
@@ -66,6 +68,12 @@ What this proves:
 - what was onchain
 - what was signed offchain
 - that the full session lifecycle is auditable
+
+Optional Agora proof:
+
+- paste a `channel_id` from any external agent run
+- click **Load proof**
+- show the same lifecycle without relying on browser-local state
 
 ## Optional add-on
 
