@@ -12,6 +12,10 @@ ArcPort is not a consumer app. The runtime user is the agent. The web app is an 
 
 V3 moves ArcPort toward a grant-ready agent runtime: the Wallet view now points operators to LI.FI/Jumper funding for Arc Testnet, session close uses explicit Arc fee settings, and the machine-facing session APIs now carry agent policy metadata for any external agent runtime. Hermes is one adapter, not the product boundary.
 
+New frontend reference client for reviewers looking for a React/Next repo:
+
+- [examples/next-wagmi-session-client](examples/next-wagmi-session-client) shows a React/Next + `wagmi`/`viem` client shape for x402 payment requirements, session policy intent, and the ArcPort open -> calls -> close -> proof lifecycle.
+
 Read the UI this way:
 
 - **wallet balance** = operator funds on Arc
